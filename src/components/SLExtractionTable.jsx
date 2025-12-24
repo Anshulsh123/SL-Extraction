@@ -577,7 +577,6 @@ function SLExtractionTable() {
             overflow: 'auto',
             position: 'relative',
             borderTop: '1px solid #e5e7eb',
-            borderRadius: '0 0 12px 12px',
           }}
         >
           <Table
