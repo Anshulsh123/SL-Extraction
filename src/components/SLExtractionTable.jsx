@@ -30,7 +30,6 @@ import {
   FilterList as FilterListIcon,
   Refresh as RefreshIcon,
   Download as DownloadIcon,
-  CheckCircle as CheckCircleIcon,
 } from '@mui/icons-material'
 
 // Sample data structure - this would come from the agent
@@ -749,12 +748,9 @@ function SLExtractionTable() {
       {/* AI Insights and References Section */}
       <Box sx={{ display: 'flex', gap: 3, mb: 3, alignItems: 'stretch' }}>
         <Paper elevation={2} sx={{ flex: 1, p: 2, display: 'flex', flexDirection: 'column', borderRadius: 8 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-            <CheckCircleIcon sx={{ color: 'green', mr: 1 }} />
-            <Typography variant="h6" fontWeight="bold">
-              AI Insights
-            </Typography>
-          </Box>
+          <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
+            AI Insights
+          </Typography>
           <Box component="ul" sx={{ pl: 3, m: 0, flex: 1 }}>
             {aiInsights.map((insight, index) => (
               <Typography
