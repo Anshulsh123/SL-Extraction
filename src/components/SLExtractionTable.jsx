@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import * as XLSX from 'xlsx'
 import {
   Box,
@@ -163,6 +163,25 @@ function SLExtractionTable({ rows: rowsProp, aiInsights: aiInsightsProp, referen
   React.useEffect(() => {
     setReferencesState(safeReferences)
   }, [safeReferences])
+
+  useEffect(() => {
+    const handler = (event) => {
+      if (event?.data?.type !== 'ui_component_render') return
+      const payload = event.data.payload || {}
+
+      if (Array.isArray(payload.table)) {
+        setData(payload.table)
+        setSelected([])
+        setPage(0)
+      }
+
+      if (Array.isArray(payload.aiInsights)) setAiInsightsState(payload.aiInsights)
+      if (Array.isArray(payload.references)) setReferencesState(payload.references)
+    }
+
+    window.addEventListener('message', handler)
+    return () => window.removeEventListener('message', handler)
+  }, [])
 
   const handleSelectAll = (event) => {
     if (event.target.checked) {
