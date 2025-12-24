@@ -33,62 +33,6 @@ import {
   Download as DownloadIcon,
 } from '@mui/icons-material'
 
-// Sample data structure - this would come from the agent
-const initialData = Array.from({ length: 35 }, (_v, idx) => {
-  const n = idx + 1
-  const sev = (idx % 4) + 1
-  const priority = idx % 2 === 0 ? 'High' : 'Medium'
-  const cat = idx % 2 === 0 ? 'Availability' : 'Resolution'
-  const subcat = cat === 'Availability' ? 'Response Time' : 'Time to Resolve'
-  const maxMinutes = 60 + idx * 5
-  const maxHours = 4 + idx
-  const isTimeInMinutes = idx % 3 === 0
-  return {
-    id: n,
-    sNo: n,
-    title: `Severity Level ${sev} ${cat}`,
-    lineOfBusiness: 'Managed Services',
-    programProject: 'Skype Managed Services',
-    serviceLevelId: `SL${String(n).padStart(4, '0')}`,
-    documentName: 'EXHIBIT B',
-    serviceLevelDescription:
-      cat === 'Availability'
-        ? `Respond to Severity Level ${sev} incidents within ${maxMinutes} minutes`
-        : `Resolve Severity Level ${sev} incidents within ${maxHours} hours`,
-    slType: 'SL',
-    slCategory: cat,
-    slSubcategory: subcat,
-    priority,
-    unitOfMeasurement: isTimeInMinutes ? 'Minutes' : 'Hours',
-    minOrMax: 'Maximum',
-    expectedTargetValue: isTimeInMinutes ? `${maxMinutes}` : `${maxHours}`,
-    thresholdValueFloor: isTimeInMinutes ? `${maxMinutes + 30}` : `${maxHours + 6}`,
-    thresholdValueBasement: isTimeInMinutes ? `${maxMinutes + 60}` : `${maxHours + 12}`,
-    measurementWindow: 'Per incident',
-    computationFrequency: 'Monthly',
-    exclusions: 'Planned maintenance and force majeure',
-    slCreditApplicable: 'Yes',
-    slCreditClauseDescription: 'Credits applied beyond threshold defaults',
-    slCreditMode: 'Percent of monthly charges',
-    slCreditFormula: '5% of monthly charge per default beyond threshold',
-    slCreditFrequency: 'Monthly',
-    earnbackApplicable: idx % 3 === 0 ? 'Yes' : 'No',
-    earnbackClauseDescription: idx % 3 === 0 ? 'Earnback if 2 consecutive months meet target' : 'N/A',
-    earnbackMode: idx % 3 === 0 ? 'Credit reversal' : 'N/A',
-    earnbackFrequency: idx % 3 === 0 ? 'Monthly' : 'N/A',
-    serviceLevelDefault: 'Exceeded committed time',
-    persistentDefaultClause: 'Defaults in consecutive months trigger RCA',
-    terminationTrigger: 'Repeated defaults may trigger termination review',
-    slStartDate: '2024-01-01',
-    slEndDates: '2025-12-31',
-    slEffectiveDate: '2024-02-01',
-    reportingFrequency: 'Monthly',
-    slOwner: 'Service Delivery',
-    slApprover: 'Client Ops',
-    supplierResponsibility: 'Yes',
-  }
-})
-
 const columns = [
   { id: 'sNo', label: 'Sno', minWidth: 70, defaultWidth: 80 },
   { id: 'title', label: 'Title / SL Name', minWidth: 200, defaultWidth: 220 },
@@ -132,24 +76,6 @@ const columns = [
 
 // Enable filtering on all columns
 const taxonomyFields = columns.map((c) => c.id)
-
-const aiInsights = [
-  'Amount at Risk: 15% of Charges (excluding out-of-pocket expenses) per month.',
-  'Credit Calculation: Each Service Level assigned % credit allocation. Credits for Defaults = SL Allocation % x Amount at Risk. Max credits/month capped at full Amount at Risk. Regional allocation for availability.',
-  'Earnback: Not specified in the contract.',
-  'Termination: Sirion may terminate if same Service Level missed 3 consecutive months or 4 in 12 months. 30 days\' written notice after right arises.',
-  'Default and Additional Remedies: Credits are sole remedy unless Service Level Floor breached or all credits for month triggered; in those cases, direct damages up to liability cap also available. Service Level Default defined as failure to meet SL, with specific exceptions.',
-]
-
-const references = [
-  'Exhibit B SERVICE LEVELS',
-  'Attachment B-1 to Exhibit B Service Level Metrics',
-  'Attachment B-2 to Exhibit B Vendor Severity Rating to SIRION Priority Crosswalk',
-  'Exhibit C CHARGES',
-  'Exhibit A PROJECT SERVICES',
-  'Annex 1',
-  'Exhibit D GOVERNANCE',
-]
 
 // Filter Menu Component anchored to the filter button
 function FilterMenu({ anchorEl, open, onClose, columnId, data, column }) {
@@ -201,8 +127,8 @@ function FilterMenu({ anchorEl, open, onClose, columnId, data, column }) {
   )
 }
 
-function SLExtractionTable() {
-  const [data, setData] = useState(initialData)
+function SLExtractionTable({ rows = [], aiInsights = [], references = [] }) {
+  const [data, setData] = useState(rows)
   const [selected, setSelected] = useState([])
   const [retriggerDialog, setRetriggerDialog] = useState({ open: false, type: null, target: null })
   const [instructions, setInstructions] = useState('')
@@ -218,6 +144,12 @@ function SLExtractionTable() {
       return acc
     }, {})
   )
+
+  React.useEffect(() => {
+    setData(rows)
+    setSelected([])
+    setPage(0)
+  }, [rows])
 
   const handleSelectAll = (event) => {
     if (event.target.checked) {
