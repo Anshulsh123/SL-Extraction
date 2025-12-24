@@ -330,6 +330,10 @@ function SLExtractionTable() {
     }, {})
   )
 
+  const checkboxColumnWidth = 50
+  const sNoOffset = checkboxColumnWidth
+  const titleOffset = checkboxColumnWidth + (columnWidths['sNo'] || columns.find((c) => c.id === 'sNo')?.defaultWidth || 0)
+
   const handleSelectAll = (event) => {
     if (event.target.checked) {
       setSelected(data.map((row) => row.id))
@@ -356,11 +360,6 @@ function SLExtractionTable() {
     }
 
     setSelected(newSelected)
-  }
-
-  const handleDeleteRow = (id) => {
-    setData(data.filter((row) => row.id !== id))
-    setSelected(selected.filter((selectedId) => selectedId !== id))
   }
 
   const handleDeleteSelected = () => {
@@ -581,61 +580,86 @@ function SLExtractionTable() {
                     onChange={handleSelectAll}
                   />
                 </TableCell>
-                {columns.map((column) => (
-                  <ResizableHeaderCell
-                    key={column.id}
-                    column={column}
-                    sx={{
-                      backgroundColor: '#f7f7f7',
-                      fontWeight: 700,
-                    }}
-                  >
-                    <Box
+                {columns.map((column) => {
+                  const isSticky = column.id === 'sNo' || column.id === 'title'
+                  const stickyLeft = column.id === 'sNo' ? sNoOffset : column.id === 'title' ? titleOffset : undefined
+                  return (
+                    <ResizableHeaderCell
+                      key={column.id}
+                      column={column}
                       sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 0.5,
-                        pr: 2.5,
-                        width: '100%',
-                        position: 'relative',
-                        zIndex: 2,
+                        backgroundColor: '#f7f7f7',
+                        fontWeight: 700,
+                        ...(isSticky
+                          ? {
+                              position: 'sticky',
+                              left: stickyLeft,
+                              zIndex: 3,
+                            }
+                          : {}),
                       }}
                     >
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          whiteSpace: 'nowrap',
-                          flexShrink: 0,
-                          flex: '0 0 auto',
-                          fontWeight: 700,
-                          color: '#6b7280',
-                        }}
-                      >
-                        {column.label}
-                      </Typography>
                       <Box
                         sx={{
                           display: 'flex',
                           alignItems: 'center',
                           gap: 0.5,
-                          flexShrink: 0,
-                          ml: 'auto',
-                          mr: 0.5,
+                          pr: 2.5,
+                          width: '100%',
+                          position: 'relative',
+                          zIndex: 2,
                         }}
                       >
-                        {taxonomyFields.includes(column.id) && (
-                          <Tooltip title="Filter options">
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            whiteSpace: 'nowrap',
+                            flexShrink: 0,
+                            flex: '0 0 auto',
+                            fontWeight: 700,
+                            color: '#6b7280',
+                          }}
+                        >
+                          {column.label}
+                        </Typography>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 0.5,
+                            flexShrink: 0,
+                            ml: 'auto',
+                            mr: 0.5,
+                          }}
+                        >
+                          {taxonomyFields.includes(column.id) && (
+                            <Tooltip title="Filter options">
+                              <IconButton
+                                ref={(el) => {
+                                  if (el) filterButtonRefs.current[column.id] = el
+                                }}
+                                id={`filter-btn-${column.id}`}
+                                size="small"
+                                onClick={(e) => {
+                                  e.preventDefault()
+                                  e.stopPropagation()
+                                  handleFilterClick(e, column.id)
+                                }}
+                                sx={{
+                                  p: 0.5,
+                                  flexShrink: 0,
+                                  color: '#9ca3af',
+                                  '&:hover': { color: '#4b5563' },
+                                }}
+                              >
+                                <FilterListIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          )}
+                          <Tooltip title="Retrigger extraction for this column">
                             <IconButton
-                              ref={(el) => {
-                                if (el) filterButtonRefs.current[column.id] = el
-                              }}
-                              id={`filter-btn-${column.id}`}
                               size="small"
-                              onClick={(e) => {
-                                e.preventDefault()
-                                e.stopPropagation()
-                                handleFilterClick(e, column.id)
-                              }}
+                              onClick={() => handleRetriggerExtraction('column', column.id)}
                               sx={{
                                 p: 0.5,
                                 flexShrink: 0,
@@ -643,39 +667,14 @@ function SLExtractionTable() {
                                 '&:hover': { color: '#4b5563' },
                               }}
                             >
-                              <FilterListIcon fontSize="small" />
+                              <RefreshIcon fontSize="small" />
                             </IconButton>
                           </Tooltip>
-                        )}
-                        <Tooltip title="Retrigger extraction for this column">
-                          <IconButton
-                            size="small"
-                            onClick={() => handleRetriggerExtraction('column', column.id)}
-                            sx={{
-                              p: 0.5,
-                              flexShrink: 0,
-                              color: '#9ca3af',
-                              '&:hover': { color: '#4b5563' },
-                            }}
-                          >
-                            <RefreshIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
+                        </Box>
                       </Box>
-                    </Box>
-                  </ResizableHeaderCell>
-                ))}
-                <TableCell
-                  sx={{
-                    backgroundColor: '#f7f7f7',
-                    width: 100,
-                    position: 'sticky',
-                    right: 0,
-                    zIndex: 3,
-                  }}
-                >
-                  Actions
-                </TableCell>
+                    </ResizableHeaderCell>
+                  )
+                })}
               </TableRow>
             </TableHead>
             <TableBody>
@@ -697,43 +696,36 @@ function SLExtractionTable() {
                         onChange={() => handleSelectRow(row.id)}
                       />
                     </TableCell>
-                    {columns.map((column) => (
-                      <TableCell
-                        key={column.id}
-                        sx={{
-                          width: columnWidths[column.id] || column.defaultWidth,
-                          minWidth: columnWidths[column.id] || column.defaultWidth,
-                          maxWidth: columnWidths[column.id] || column.defaultWidth,
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          color: '#1f2933',
-                          fontWeight: 600,
-                          fontSize: 13,
-                        }}
-                      >
-                        {row[column.id] || '-'}
-                      </TableCell>
-                    ))}
-                    <TableCell
-                      sx={{
-                        position: 'sticky',
-                        right: 0,
-                        backgroundColor: '#fff',
-                        zIndex: 2,
-                        boxShadow: '-6px 0 12px rgba(0,0,0,0.04)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <IconButton
-                        size="small"
-                        color="error"
-                        onClick={() => handleDeleteRow(row.id)}
-                      >
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
-                    </TableCell>
+                    {columns.map((column) => {
+                      const isSticky = column.id === 'sNo' || column.id === 'title'
+                      const stickyLeft = column.id === 'sNo' ? sNoOffset : column.id === 'title' ? titleOffset : undefined
+                      return (
+                        <TableCell
+                          key={column.id}
+                          sx={{
+                            width: columnWidths[column.id] || column.defaultWidth,
+                            minWidth: columnWidths[column.id] || column.defaultWidth,
+                            maxWidth: columnWidths[column.id] || column.defaultWidth,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            color: '#1f2933',
+                            fontWeight: 600,
+                            fontSize: 13,
+                            ...(isSticky
+                              ? {
+                                  position: 'sticky',
+                                  left: stickyLeft,
+                                  backgroundColor: '#fff',
+                                  zIndex: 2,
+                                  boxShadow: column.id === 'title' ? '6px 0 12px rgba(0,0,0,0.04)' : undefined,
+                                }
+                              : {}),
+                          }}
+                        >
+                          {row[column.id] || '-'}
+                        </TableCell>
+                      )
+                    })}
                   </TableRow>
                 )
               })}
