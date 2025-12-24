@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import {
   Box,
   Paper,
@@ -20,9 +20,9 @@ import {
   Chip,
   Tooltip,
   Menu,
-  MenuItem,
-  ListItemIcon,
   ListItemText,
+  MenuItem,
+  List,
 } from '@mui/material'
 import {
   Delete as DeleteIcon,
@@ -136,15 +136,15 @@ const initialData = [
 const taxonomyFields = ['lineOfBusiness', 'programProject', 'slType', 'si']
 
 const columns = [
-  { id: 'sNo', label: 'S. No.', minWidth: 80 },
-  { id: 'title', label: 'Title/SL Name', minWidth: 200 },
-  { id: 'lineOfBusiness', label: 'Line of Business', minWidth: 150 },
-  { id: 'programProject', label: 'Program/Project', minWidth: 180 },
-  { id: 'serviceLevelId', label: 'Service Level ID', minWidth: 150 },
-  { id: 'documentName', label: 'Document Name/ID', minWidth: 150 },
-  { id: 'serviceLevelDescription', label: 'Service Level Description', minWidth: 300 },
-  { id: 'slType', label: 'SL Type', minWidth: 100 },
-  { id: 'si', label: 'SI', minWidth: 80 },
+  { id: 'sNo', label: 'S. No.', minWidth: 80, defaultWidth: 80 },
+  { id: 'title', label: 'Title/SL Name', minWidth: 200, defaultWidth: 200 },
+  { id: 'lineOfBusiness', label: 'Line of Business', minWidth: 150, defaultWidth: 150 },
+  { id: 'programProject', label: 'Program/Project', minWidth: 180, defaultWidth: 180 },
+  { id: 'serviceLevelId', label: 'Service Level ID', minWidth: 150, defaultWidth: 150 },
+  { id: 'documentName', label: 'Document Name/ID', minWidth: 150, defaultWidth: 150 },
+  { id: 'serviceLevelDescription', label: 'Service Level Description', minWidth: 300, defaultWidth: 300 },
+  { id: 'slType', label: 'SL Type', minWidth: 100, defaultWidth: 100 },
+  { id: 'si', label: 'SI', minWidth: 80, defaultWidth: 80 },
 ]
 
 const aiInsights = [
@@ -165,12 +165,69 @@ const references = [
   'Exhibit D GOVERNANCE',
 ]
 
+// Filter Menu Component anchored to the filter button
+function FilterMenu({ anchorEl, open, onClose, columnId, data, column }) {
+  if (!open || !anchorEl) return null
+
+  const rect = anchorEl.getBoundingClientRect()
+  const anchorPosition = {
+    top: rect.bottom + (window.scrollY || window.pageYOffset),
+    left: rect.left + (window.scrollX || window.pageXOffset),
+  }
+
+  return (
+    <Menu
+      // Use computed screen coordinates to avoid any portal/scroll misalignment
+      anchorEl={anchorEl}
+      anchorReference="anchorPosition"
+      anchorPosition={anchorPosition}
+      open
+      onClose={onClose}
+      anchorOrigin={{
+        vertical: 'bottom',
+        horizontal: 'left',
+      }}
+      transformOrigin={{
+        vertical: 'top',
+        horizontal: 'left',
+      }}
+      disablePortal
+      keepMounted
+      MenuListProps={{ dense: true, sx: { maxHeight: 300, minWidth: 180 } }}
+      slotProps={{
+        paper: {
+          sx: { overflowY: 'auto' },
+          elevation: 3,
+        },
+      }}
+    >
+      <MenuItem onClick={onClose}>
+        <ListItemText>All</ListItemText>
+      </MenuItem>
+      {Array.from(new Set(data.map((row) => row[column.id])))
+        .filter((val) => val && val !== '-')
+        .map((value) => (
+          <MenuItem key={value} onClick={onClose}>
+            <ListItemText>{value}</ListItemText>
+          </MenuItem>
+        ))}
+    </Menu>
+  )
+}
+
 function SLExtractionTable() {
   const [data, setData] = useState(initialData)
   const [selected, setSelected] = useState([])
   const [retriggerDialog, setRetriggerDialog] = useState({ open: false, type: null, target: null })
   const [instructions, setInstructions] = useState('')
   const [filterMenus, setFilterMenus] = useState({})
+  const filterButtonRefs = useRef({})
+  const [columnWidths, setColumnWidths] = useState(
+    columns.reduce((acc, col) => {
+      acc[col.id] = col.defaultWidth
+      return acc
+    }, {})
+  )
 
   const handleSelectAll = (event) => {
     if (event.target.checked) {
@@ -227,10 +284,19 @@ function SLExtractionTable() {
   }
 
   const handleFilterClick = (event, columnId) => {
-    setFilterMenus({
-      ...filterMenus,
-      [columnId]: event.currentTarget,
-    })
+    event.preventDefault()
+    event.stopPropagation()
+    // Get the button element - currentTarget is the IconButton
+    const button = event.currentTarget
+    console.log('Filter button clicked:', button, 'Column:', columnId)
+    // Verify it's a valid DOM element
+    if (button && button instanceof HTMLElement) {
+      console.log('Button position:', button.getBoundingClientRect())
+      setFilterMenus((prev) => ({
+        ...prev,
+        [columnId]: button,
+      }))
+    }
   }
 
   const handleFilterClose = (columnId) => {
@@ -256,8 +322,94 @@ function SLExtractionTable() {
   const isSelected = (id) => selected.indexOf(id) !== -1
   const selectedCount = selected.length
 
+  // Resizable Header Cell Component
+  const ResizableHeaderCell = ({ column, children, ...props }) => {
+    const width = columnWidths[column.id] || column.defaultWidth
+
+    const handleMouseDown = (e) => {
+      e.preventDefault()
+      e.stopPropagation()
+      const startX = e.pageX
+      const startWidth = width
+
+      const handleMouseMove = (e) => {
+        const newWidth = startWidth + (e.pageX - startX)
+        const minWidth = column.minWidth || 50
+        if (newWidth >= minWidth) {
+          setColumnWidths((prev) => ({
+            ...prev,
+            [column.id]: newWidth,
+          }))
+        }
+      }
+
+      const handleMouseUp = () => {
+        document.removeEventListener('mousemove', handleMouseMove)
+        document.removeEventListener('mouseup', handleMouseUp)
+        document.body.style.cursor = ''
+        document.body.style.userSelect = ''
+      }
+
+      document.addEventListener('mousemove', handleMouseMove)
+      document.addEventListener('mouseup', handleMouseUp)
+      document.body.style.cursor = 'col-resize'
+      document.body.style.userSelect = 'none'
+    }
+
+    return (
+      <TableCell
+        {...props}
+        sx={{
+          ...props.sx,
+          width: width,
+          minWidth: width,
+          maxWidth: width,
+          position: 'relative',
+          whiteSpace: 'nowrap',
+          overflow: 'visible',
+          paddingRight: '12px !important',
+        }}
+      >
+        {children}
+        <Box
+          onMouseDown={handleMouseDown}
+          sx={{
+            position: 'absolute',
+            right: -2,
+            top: 0,
+            bottom: 0,
+            width: '8px',
+            cursor: 'col-resize',
+            zIndex: 1,
+            transition: 'background-color 0.2s',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            '&:hover': {
+              backgroundColor: 'rgba(25, 118, 210, 0.2)',
+              '&::after': {
+                content: '""',
+                position: 'absolute',
+                left: '50%',
+                top: '20%',
+                bottom: '20%',
+                width: '2px',
+                backgroundColor: 'rgba(25, 118, 210, 0.6)',
+                transform: 'translateX(-50%)',
+                borderRadius: '1px',
+              },
+            },
+            '&:active': {
+              backgroundColor: 'rgba(25, 118, 210, 0.3)',
+            },
+          }}
+        />
+      </TableCell>
+    )
+  }
+
   return (
-    <Box sx={{ p: 3, maxWidth: '100%', mx: 'auto' }}>
+    <Box sx={{ p: 3, maxWidth: '100%', mx: 'auto', position: 'relative' }}>
       {/* Service Level Extractions Section */}
       <Paper elevation={2} sx={{ mb: 3 }}>
         <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -304,11 +456,17 @@ function SLExtractionTable() {
           </Box>
         )}
 
-        <TableContainer sx={{ maxHeight: 600, overflow: 'auto' }}>
-          <Table stickyHeader>
+        <TableContainer
+          sx={{
+            maxHeight: 600,
+            overflow: 'auto',
+            position: 'relative',
+          }}
+        >
+          <Table stickyHeader sx={{ tableLayout: 'fixed' }}>
             <TableHead>
               <TableRow>
-                <TableCell padding="checkbox" sx={{ backgroundColor: '#f5f5f5' }}>
+                <TableCell padding="checkbox" sx={{ backgroundColor: '#f5f5f5', width: 50 }}>
                   <Checkbox
                     indeterminate={selectedCount > 0 && selectedCount < data.length}
                     checked={data.length > 0 && selectedCount === data.length}
@@ -316,56 +474,79 @@ function SLExtractionTable() {
                   />
                 </TableCell>
                 {columns.map((column) => (
-                  <TableCell
+                  <ResizableHeaderCell
                     key={column.id}
+                    column={column}
                     sx={{
-                      minWidth: column.minWidth,
                       backgroundColor: '#f5f5f5',
                       fontWeight: 'bold',
                     }}
                   >
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      {column.label}
-                      {taxonomyFields.includes(column.id) && (
-                        <Tooltip title="Filter options">
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 0.5,
+                        pr: 2.5,
+                        width: '100%',
+                        position: 'relative',
+                        zIndex: 2,
+                      }}
+                    >
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          whiteSpace: 'nowrap',
+                          flexShrink: 0,
+                          flex: '0 0 auto',
+                          fontWeight: 600,
+                        }}
+                      >
+                        {column.label}
+                      </Typography>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 0.5,
+                          flexShrink: 0,
+                          ml: 'auto',
+                          mr: 0.5,
+                        }}
+                      >
+                        {taxonomyFields.includes(column.id) && (
+                          <Tooltip title="Filter options">
+                            <IconButton
+                              ref={(el) => {
+                                if (el) filterButtonRefs.current[column.id] = el
+                              }}
+                              id={`filter-btn-${column.id}`}
+                              size="small"
+                              onClick={(e) => {
+                                e.preventDefault()
+                                e.stopPropagation()
+                                handleFilterClick(e, column.id)
+                              }}
+                              sx={{ p: 0.5, flexShrink: 0 }}
+                            >
+                              <FilterListIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        )}
+                        <Tooltip title="Retrigger extraction for this column">
                           <IconButton
                             size="small"
-                            onClick={(e) => handleFilterClick(e, column.id)}
-                            sx={{ p: 0.5 }}
+                            onClick={() => handleRetriggerExtraction('column', column.id)}
+                            sx={{ p: 0.5, flexShrink: 0 }}
                           >
-                            <FilterListIcon fontSize="small" />
+                            <RefreshIcon fontSize="small" />
                           </IconButton>
                         </Tooltip>
-                      )}
-                      <Tooltip title="Retrigger extraction for this column">
-                        <IconButton
-                          size="small"
-                          onClick={() => handleRetriggerExtraction('column', column.id)}
-                          sx={{ p: 0.5 }}
-                        >
-                          <RefreshIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      <Menu
-                        anchorEl={filterMenus[column.id]}
-                        open={Boolean(filterMenus[column.id])}
-                        onClose={() => handleFilterClose(column.id)}
-                      >
-                        <MenuItem onClick={() => handleFilterClose(column.id)}>
-                          <ListItemText>All</ListItemText>
-                        </MenuItem>
-                        {Array.from(new Set(data.map((row) => row[column.id])))
-                          .filter((val) => val && val !== '-')
-                          .map((value) => (
-                            <MenuItem key={value} onClick={() => handleFilterClose(column.id)}>
-                              <ListItemText>{value}</ListItemText>
-                            </MenuItem>
-                          ))}
-                      </Menu>
+                      </Box>
                     </Box>
-                  </TableCell>
+                  </ResizableHeaderCell>
                 ))}
-                <TableCell sx={{ backgroundColor: '#f5f5f5', minWidth: 80 }}>Actions</TableCell>
+                <TableCell sx={{ backgroundColor: '#f5f5f5', width: 80 }}>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -385,7 +566,18 @@ function SLExtractionTable() {
                       />
                     </TableCell>
                     {columns.map((column) => (
-                      <TableCell key={column.id}>{row[column.id]}</TableCell>
+                      <TableCell
+                        key={column.id}
+                        sx={{
+                          width: columnWidths[column.id] || column.defaultWidth,
+                          minWidth: columnWidths[column.id] || column.defaultWidth,
+                          maxWidth: columnWidths[column.id] || column.defaultWidth,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                        }}
+                      >
+                        {row[column.id]}
+                      </TableCell>
                     ))}
                     <TableCell>
                       <IconButton
@@ -403,6 +595,21 @@ function SLExtractionTable() {
           </Table>
         </TableContainer>
       </Paper>
+
+      {/* Filter Menus - Using custom component with manual positioning */}
+      {columns
+        .filter((column) => taxonomyFields.includes(column.id))
+        .map((column) => (
+          <FilterMenu
+            key={`filter-menu-${column.id}`}
+            anchorEl={filterMenus[column.id]}
+            open={Boolean(filterMenus[column.id])}
+            onClose={() => handleFilterClose(column.id)}
+            columnId={column.id}
+            column={column}
+            data={data}
+          />
+        ))}
 
       {/* AI Insights and References Section */}
       <Box sx={{ display: 'flex', gap: 3, mb: 3 }}>
@@ -498,3 +705,4 @@ function SLExtractionTable() {
 }
 
 export default SLExtractionTable
+
