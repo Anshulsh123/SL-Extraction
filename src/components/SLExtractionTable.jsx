@@ -133,7 +133,7 @@ function SLExtractionTable({ rows: rowsProp, aiInsights: aiInsightsProp, referen
   const [aiInsightsState, setAiInsightsState] = useState(safeAiInsights)
   const [referencesState, setReferencesState] = useState(safeReferences)
   const [selected, setSelected] = useState([])
-  const [columnsState, setColumnsState] = useState(columns)
+  const [columnsState] = useState(columns)
   const [retriggerDialog, setRetriggerDialog] = useState({ open: false, type: null, target: null })
   const [instructions, setInstructions] = useState('')
   const [filterMenus, setFilterMenus] = useState({})
@@ -144,7 +144,7 @@ function SLExtractionTable({ rows: rowsProp, aiInsights: aiInsightsProp, referen
     Math.max(col.defaultWidth || 140, (col.label?.length || 8) * 8 + 48) // room for text + icons
 
   const [columnWidths, setColumnWidths] = useState(
-    columns.reduce((acc, col) => {
+    columnsState.reduce((acc, col) => {
       acc[col.id] = computeInitialWidth(col)
       return acc
     }, {})
@@ -163,16 +163,6 @@ function SLExtractionTable({ rows: rowsProp, aiInsights: aiInsightsProp, referen
   React.useEffect(() => {
     setReferencesState(safeReferences)
   }, [safeReferences])
-
-  React.useEffect(() => {
-    setColumnWidths((prev) => {
-      const next = { ...prev }
-      columnsState.forEach((col) => {
-        if (!next[col.id]) next[col.id] = computeInitialWidth(col)
-      })
-      return next
-    })
-  }, [columnsState])
 
   const handleSelectAll = (event) => {
     if (event.target.checked) {
@@ -304,56 +294,6 @@ function SLExtractionTable({ rows: rowsProp, aiInsights: aiInsightsProp, referen
       document.body.style.cursor = 'col-resize'
       document.body.style.userSelect = 'none'
     }
-    React.useEffect(() => {
-      const handler = (event) => {
-        if (event?.data?.type !== 'ui_component_render') return
-        const payload = event.data.payload || {}
-    
-        console.log('ui_component_render received', payload)
-    
-        const buildColumns = () => {
-          const incoming = Array.isArray(payload.columns) ? payload.columns : []
-          // Use provided columns if given, but append any known defaults that are missing
-          if (incoming.length > 0) {
-            const nextCols = incoming.map((c) => ({
-              id: c.key,
-              label: c.label,
-              minWidth: 120,
-              defaultWidth: 160,
-            }))
-            const existing = new Set(nextCols.map((c) => c.id))
-            columns.forEach((c) => {
-              if (!existing.has(c.id)) nextCols.push(c)
-            })
-            return nextCols
-          }
-          // If no columns provided, fall back to defaults
-          return columns
-        }
-
-        const nextCols = buildColumns()
-        setColumnsState(nextCols)
-        setColumnWidths((prev) => {
-          const next = { ...prev }
-          nextCols.forEach((col) => {
-            if (!next[col.id]) next[col.id] = computeInitialWidth(col)
-          })
-          return next
-        })
-
-        if (Array.isArray(payload.rows)) {
-          setData(payload.rows)
-          setSelected([])
-          setPage(0)
-        }
-
-        if (Array.isArray(payload.aiInsights)) setAiInsightsState(payload.aiInsights)
-        if (Array.isArray(payload.references)) setReferencesState(payload.references)
-      }
-    
-      window.addEventListener('message', handler)
-      return () => window.removeEventListener('message', handler)
-    }, [])    
     return (
       <TableCell
         {...props}
