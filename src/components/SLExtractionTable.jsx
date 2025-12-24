@@ -74,9 +74,6 @@ const columns = [
   { id: 'supplierResponsibility', label: 'Supplier Responsibility?', minWidth: 170, defaultWidth: 190 },
 ]
 
-// Enable filtering on all columns
-const taxonomyFields = columns.map((c) => c.id)
-
 // Filter Menu Component anchored to the filter button
 function FilterMenu({ anchorEl, open, onClose, columnId, data, column }) {
   if (!open || !anchorEl) return null
@@ -127,14 +124,22 @@ function FilterMenu({ anchorEl, open, onClose, columnId, data, column }) {
   )
 }
 
-function SLExtractionTable({ rows = [], aiInsights = [], references = [] }) {
-  const [data, setData] = useState(rows)
+function SLExtractionTable({ rows: rowsProp, aiInsights: aiInsightsProp, references: referencesProp }) {
+  const safeRows = React.useMemo(() => rowsProp ?? [], [rowsProp])
+  const safeAiInsights = React.useMemo(() => aiInsightsProp ?? [], [aiInsightsProp])
+  const safeReferences = React.useMemo(() => referencesProp ?? [], [referencesProp])
+
+  const [data, setData] = useState(safeRows)
+  const [aiInsightsState, setAiInsightsState] = useState(safeAiInsights)
+  const [referencesState, setReferencesState] = useState(safeReferences)
   const [selected, setSelected] = useState([])
+  const [columnsState, setColumnsState] = useState(columns)
   const [retriggerDialog, setRetriggerDialog] = useState({ open: false, type: null, target: null })
   const [instructions, setInstructions] = useState('')
   const [filterMenus, setFilterMenus] = useState({})
   const filterButtonRefs = useRef({})
   const [page, setPage] = useState(0)
+  const taxonomyFields = React.useMemo(() => columnsState.map((c) => c.id), [columnsState])
   const computeInitialWidth = (col) =>
     Math.max(col.defaultWidth || 140, (col.label?.length || 8) * 8 + 48) // room for text + icons
 
@@ -146,10 +151,28 @@ function SLExtractionTable({ rows = [], aiInsights = [], references = [] }) {
   )
 
   React.useEffect(() => {
-    setData(rows)
+    setData(safeRows)
     setSelected([])
     setPage(0)
-  }, [rows])
+  }, [safeRows])
+
+  React.useEffect(() => {
+    setAiInsightsState(safeAiInsights)
+  }, [safeAiInsights])
+
+  React.useEffect(() => {
+    setReferencesState(safeReferences)
+  }, [safeReferences])
+
+  React.useEffect(() => {
+    setColumnWidths((prev) => {
+      const next = { ...prev }
+      columnsState.forEach((col) => {
+        if (!next[col.id]) next[col.id] = computeInitialWidth(col)
+      })
+      return next
+    })
+  }, [columnsState])
 
   const handleSelectAll = (event) => {
     if (event.target.checked) {
@@ -281,7 +304,56 @@ function SLExtractionTable({ rows = [], aiInsights = [], references = [] }) {
       document.body.style.cursor = 'col-resize'
       document.body.style.userSelect = 'none'
     }
+    React.useEffect(() => {
+      const handler = (event) => {
+        if (event?.data?.type !== 'ui_component_render') return
+        const payload = event.data.payload || {}
+    
+        console.log('ui_component_render received', payload)
+    
+        const buildColumns = () => {
+          const incoming = Array.isArray(payload.columns) ? payload.columns : []
+          // Use provided columns if given, but append any known defaults that are missing
+          if (incoming.length > 0) {
+            const nextCols = incoming.map((c) => ({
+              id: c.key,
+              label: c.label,
+              minWidth: 120,
+              defaultWidth: 160,
+            }))
+            const existing = new Set(nextCols.map((c) => c.id))
+            columns.forEach((c) => {
+              if (!existing.has(c.id)) nextCols.push(c)
+            })
+            return nextCols
+          }
+          // If no columns provided, fall back to defaults
+          return columns
+        }
 
+        const nextCols = buildColumns()
+        setColumnsState(nextCols)
+        setColumnWidths((prev) => {
+          const next = { ...prev }
+          nextCols.forEach((col) => {
+            if (!next[col.id]) next[col.id] = computeInitialWidth(col)
+          })
+          return next
+        })
+
+        if (Array.isArray(payload.rows)) {
+          setData(payload.rows)
+          setSelected([])
+          setPage(0)
+        }
+
+        if (Array.isArray(payload.aiInsights)) setAiInsightsState(payload.aiInsights)
+        if (Array.isArray(payload.references)) setReferencesState(payload.references)
+      }
+    
+      window.addEventListener('message', handler)
+      return () => window.removeEventListener('message', handler)
+    }, [])    
     return (
       <TableCell
         {...props}
@@ -353,8 +425,8 @@ function SLExtractionTable({ rows = [], aiInsights = [], references = [] }) {
             variant="outlined"
             startIcon={<DownloadIcon />}
             onClick={() => {
-              const header = columns.map((c) => c.label)
-              const rows = data.map((row) => columns.map((c) => row[c.id] ?? ''))
+              const header = columnsState.map((c) => c.label)
+              const rows = data.map((row) => columnsState.map((c) => row[c.id] ?? ''))
               const sheet = XLSX.utils.aoa_to_sheet([header, ...rows])
               const wb = XLSX.utils.book_new()
               XLSX.utils.book_append_sheet(wb, sheet, 'SL Extractions')
@@ -435,7 +507,7 @@ function SLExtractionTable({ rows = [], aiInsights = [], references = [] }) {
                     onChange={handleSelectAll}
                   />
                 </TableCell>
-                {columns.map((column) => (
+                {columnsState.map((column) => (
                   <ResizableHeaderCell
                     key={column.id}
                     column={column}
@@ -544,7 +616,7 @@ function SLExtractionTable({ rows = [], aiInsights = [], references = [] }) {
                         onChange={() => handleSelectRow(row.id)}
                       />
                     </TableCell>
-                    {columns.map((column) => (
+                {columnsState.map((column) => (
                       <TableCell
                         key={column.id}
                         sx={{
@@ -580,7 +652,7 @@ function SLExtractionTable({ rows = [], aiInsights = [], references = [] }) {
       </Paper>
 
       {/* Filter Menus - Using custom component with manual positioning */}
-      {columns
+      {columnsState
         .filter((column) => taxonomyFields.includes(column.id))
         .map((column) => (
           <FilterMenu
@@ -601,7 +673,7 @@ function SLExtractionTable({ rows = [], aiInsights = [], references = [] }) {
             AI Insights
           </Typography>
           <Box component="ul" sx={{ pl: 3, m: 0, flex: 1 }}>
-            {aiInsights.map((insight, index) => (
+            {aiInsightsState.map((insight, index) => (
               <Typography
                 key={index}
                 component="li"
@@ -619,7 +691,7 @@ function SLExtractionTable({ rows = [], aiInsights = [], references = [] }) {
             References
           </Typography>
           <Box sx={{ flex: 1 }}>
-            {references.map((ref, index) => (
+            {referencesState.map((ref, index) => (
               <Chip
                 key={index}
                 label={ref}
@@ -649,7 +721,7 @@ function SLExtractionTable({ rows = [], aiInsights = [], references = [] }) {
       <Dialog open={retriggerDialog.open} onClose={() => setRetriggerDialog({ open: false, type: null, target: null })} maxWidth="sm" fullWidth>
         <DialogTitle>
           Retrigger Extraction
-          {retriggerDialog.type === 'column' && ` - ${columns.find((c) => c.id === retriggerDialog.target)?.label}`}
+          {retriggerDialog.type === 'column' && ` - ${columnsState.find((c) => c.id === retriggerDialog.target)?.label}`}
           {retriggerDialog.type === 'rows' && ` - ${retriggerDialog.target.length} Row(s)`}
         </DialogTitle>
         <DialogContent>
