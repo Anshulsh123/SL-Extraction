@@ -721,6 +721,9 @@ function SLExtractionTable() {
                         backgroundColor: '#fff',
                         zIndex: 2,
                         boxShadow: '-6px 0 12px rgba(0,0,0,0.04)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
                       }}
                     >
                       <IconButton
