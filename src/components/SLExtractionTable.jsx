@@ -511,10 +511,9 @@ function SLExtractionTable() {
 
   return (
     <Box sx={{ p: 3, maxWidth: '100%', mx: 'auto', position: 'relative' }}>
-      {/* Service Level Extractions Section */}
-      <Paper elevation={2} sx={{ mb: 3 }}>
-        <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography variant="h5" component="h1" fontWeight="bold">
+      <Paper elevation={2} sx={{ mb: 3, border: '1px solid #e5e7eb' }}>
+        <Box sx={{ p: 2.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Typography variant="h5" component="h1">
             Service Level Extractions
           </Typography>
           <Button
@@ -529,14 +528,18 @@ function SLExtractionTable() {
               a.download = 'sl-extractions.json'
               a.click()
             }}
+            sx={{
+              borderColor: '#d1d5db',
+              color: '#374151',
+              '&:hover': { borderColor: '#9ca3af', backgroundColor: '#f8fafc' },
+            }}
           >
             Export
           </Button>
         </Box>
 
-        {/* Multi-select action buttons */}
         {selectedCount > 0 && (
-          <Box sx={{ px: 2, pb: 1, display: 'flex', gap: 1 }}>
+          <Box sx={{ px: 2.5, pb: 1, display: 'flex', gap: 1 }}>
             <Button
               variant="contained"
               color="error"
@@ -559,15 +562,19 @@ function SLExtractionTable() {
 
         <TableContainer
           sx={{
-            maxHeight: 600,
+            maxHeight: 620,
             overflow: 'auto',
             position: 'relative',
+            borderTop: '1px solid #e5e7eb',
           }}
         >
           <Table stickyHeader sx={{ tableLayout: 'fixed' }}>
             <TableHead>
               <TableRow>
-                <TableCell padding="checkbox" sx={{ backgroundColor: '#f5f5f5', width: 50 }}>
+                <TableCell
+                  padding="checkbox"
+                  sx={{ backgroundColor: '#f7f7f7', width: 50, position: 'sticky', left: 0, zIndex: 3 }}
+                >
                   <Checkbox
                     indeterminate={selectedCount > 0 && selectedCount < data.length}
                     checked={data.length > 0 && selectedCount === data.length}
@@ -579,8 +586,8 @@ function SLExtractionTable() {
                     key={column.id}
                     column={column}
                     sx={{
-                      backgroundColor: '#f5f5f5',
-                      fontWeight: 'bold',
+                      backgroundColor: '#f7f7f7',
+                      fontWeight: 700,
                     }}
                   >
                     <Box
@@ -600,7 +607,8 @@ function SLExtractionTable() {
                           whiteSpace: 'nowrap',
                           flexShrink: 0,
                           flex: '0 0 auto',
-                          fontWeight: 600,
+                          fontWeight: 700,
+                          color: '#6b7280',
                         }}
                       >
                         {column.label}
@@ -628,7 +636,12 @@ function SLExtractionTable() {
                                 e.stopPropagation()
                                 handleFilterClick(e, column.id)
                               }}
-                              sx={{ p: 0.5, flexShrink: 0 }}
+                              sx={{
+                                p: 0.5,
+                                flexShrink: 0,
+                                color: '#9ca3af',
+                                '&:hover': { color: '#4b5563' },
+                              }}
                             >
                               <FilterListIcon fontSize="small" />
                             </IconButton>
@@ -638,7 +651,12 @@ function SLExtractionTable() {
                           <IconButton
                             size="small"
                             onClick={() => handleRetriggerExtraction('column', column.id)}
-                            sx={{ p: 0.5, flexShrink: 0 }}
+                            sx={{
+                              p: 0.5,
+                              flexShrink: 0,
+                              color: '#9ca3af',
+                              '&:hover': { color: '#4b5563' },
+                            }}
                           >
                             <RefreshIcon fontSize="small" />
                           </IconButton>
@@ -647,7 +665,17 @@ function SLExtractionTable() {
                     </Box>
                   </ResizableHeaderCell>
                 ))}
-                <TableCell sx={{ backgroundColor: '#f5f5f5', width: 80 }}>Actions</TableCell>
+                <TableCell
+                  sx={{
+                    backgroundColor: '#f7f7f7',
+                    width: 100,
+                    position: 'sticky',
+                    right: 0,
+                    zIndex: 3,
+                  }}
+                >
+                  Actions
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -658,9 +686,12 @@ function SLExtractionTable() {
                     key={row.id}
                     selected={isRowSelected}
                     hover
-                    sx={{ '&:hover': { backgroundColor: '#f5f5f5' } }}
+                    sx={{
+                      '&:hover': { backgroundColor: '#f9fafb' },
+                      '&.Mui-selected': { backgroundColor: '#eef2ff !important' },
+                    }}
                   >
-                    <TableCell padding="checkbox">
+                    <TableCell padding="checkbox" sx={{ position: 'sticky', left: 0, backgroundColor: '#fff', zIndex: 2 }}>
                       <Checkbox
                         checked={isRowSelected}
                         onChange={() => handleSelectRow(row.id)}
@@ -675,12 +706,23 @@ function SLExtractionTable() {
                           maxWidth: columnWidths[column.id] || column.defaultWidth,
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
+                          color: '#1f2933',
+                          fontWeight: 600,
+                          fontSize: 13,
                         }}
                       >
-                        {row[column.id]}
+                        {row[column.id] || '-'}
                       </TableCell>
                     ))}
-                    <TableCell>
+                    <TableCell
+                      sx={{
+                        position: 'sticky',
+                        right: 0,
+                        backgroundColor: '#fff',
+                        zIndex: 2,
+                        boxShadow: '-6px 0 12px rgba(0,0,0,0.04)',
+                      }}
+                    >
                       <IconButton
                         size="small"
                         color="error"
