@@ -577,13 +577,14 @@ function SLExtractionTable() {
             overflow: 'auto',
             position: 'relative',
             borderTop: '1px solid #e5e7eb',
+            pr: 0,
           }}
         >
           <Table
             stickyHeader
             sx={{
               tableLayout: 'auto',
-              width: '100%',
+              width: 'max-content',
               minWidth: '100%',
             }}
           >
@@ -614,7 +615,7 @@ function SLExtractionTable() {
                         display: 'flex',
                         alignItems: 'center',
                         gap: 0.5,
-                        pr: 2.5,
+                        pr: 3,
                         width: '100%',
                         position: 'relative',
                         zIndex: 2,
