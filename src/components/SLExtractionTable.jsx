@@ -755,15 +755,15 @@ function SLExtractionTable() {
         ))}
 
       {/* AI Insights and References Section */}
-      <Box sx={{ display: 'flex', gap: 3, mb: 3 }}>
-        <Paper elevation={2} sx={{ flex: 1, p: 2 }}>
+      <Box sx={{ display: 'flex', gap: 3, mb: 3, alignItems: 'stretch' }}>
+        <Paper elevation={2} sx={{ flex: 1, p: 2, display: 'flex', flexDirection: 'column' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
             <CheckCircleIcon sx={{ color: 'green', mr: 1 }} />
             <Typography variant="h6" fontWeight="bold">
               AI Insights
             </Typography>
           </Box>
-          <Box component="ul" sx={{ pl: 3, m: 0 }}>
+          <Box component="ul" sx={{ pl: 3, m: 0, flex: 1 }}>
             {aiInsights.map((insight, index) => (
               <Typography
                 key={index}
@@ -777,11 +777,11 @@ function SLExtractionTable() {
           </Box>
         </Paper>
 
-        <Paper elevation={2} sx={{ flex: 1, p: 2 }}>
+        <Paper elevation={2} sx={{ flex: 1, p: 2, display: 'flex', flexDirection: 'column' }}>
           <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
             References
           </Typography>
-          <Box>
+          <Box sx={{ flex: 1 }}>
             {references.map((ref, index) => (
               <Chip
                 key={index}
