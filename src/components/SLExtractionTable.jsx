@@ -323,9 +323,12 @@ function SLExtractionTable() {
   const [instructions, setInstructions] = useState('')
   const [filterMenus, setFilterMenus] = useState({})
   const filterButtonRefs = useRef({})
+  const computeInitialWidth = (col) =>
+    Math.max(col.defaultWidth || 140, (col.label?.length || 8) * 8 + 48) // room for text + icons
+
   const [columnWidths, setColumnWidths] = useState(
     columns.reduce((acc, col) => {
-      acc[col.id] = col.defaultWidth
+      acc[col.id] = computeInitialWidth(col)
       return acc
     }, {})
   )
@@ -568,7 +571,7 @@ function SLExtractionTable() {
             borderTop: '1px solid #e5e7eb',
           }}
         >
-          <Table stickyHeader sx={{ tableLayout: 'fixed' }}>
+          <Table stickyHeader sx={{ tableLayout: 'auto' }}>
             <TableHead>
               <TableRow>
                 <TableCell
@@ -588,6 +591,7 @@ function SLExtractionTable() {
                     sx={{
                       backgroundColor: '#f7f7f7',
                       fontWeight: 700,
+                      minWidth: columnWidths[column.id],
                     }}
                   >
                     <Box
@@ -692,7 +696,7 @@ function SLExtractionTable() {
                         sx={{
                           width: columnWidths[column.id] || column.defaultWidth,
                           minWidth: columnWidths[column.id] || column.defaultWidth,
-                          maxWidth: columnWidths[column.id] || column.defaultWidth,
+                          maxWidth: 'unset',
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
                           color: '#1f2933',
