@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react'
+import * as XLSX from 'xlsx'
 import {
   Box,
   Paper,
@@ -531,13 +532,12 @@ function SLExtractionTable() {
             variant="outlined"
             startIcon={<DownloadIcon />}
             onClick={() => {
-              const json = JSON.stringify(data, null, 2)
-              const blob = new Blob([json], { type: 'application/json' })
-              const url = URL.createObjectURL(blob)
-              const a = document.createElement('a')
-              a.href = url
-              a.download = 'sl-extractions.json'
-              a.click()
+              const header = columns.map((c) => c.label)
+              const rows = data.map((row) => columns.map((c) => row[c.id] ?? ''))
+              const sheet = XLSX.utils.aoa_to_sheet([header, ...rows])
+              const wb = XLSX.utils.book_new()
+              XLSX.utils.book_append_sheet(wb, sheet, 'SL Extractions')
+              XLSX.writeFile(wb, 'sl-extractions.xlsx')
             }}
             sx={{
               borderColor: '#d1d5db',
