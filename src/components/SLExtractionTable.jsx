@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef } from 'react'
 import * as XLSX from 'xlsx'
 import {
   Box,
@@ -133,7 +133,7 @@ function SLExtractionTable({ rows: rowsProp, aiInsights: aiInsightsProp, referen
   const [aiInsightsState, setAiInsightsState] = useState(safeAiInsights)
   const [referencesState, setReferencesState] = useState(safeReferences)
   const [selected, setSelected] = useState([])
-  const [columnsState] = useState(columns)
+  const [columnsState, setColumnsState] = useState(columns)
   const [retriggerDialog, setRetriggerDialog] = useState({ open: false, type: null, target: null })
   const [instructions, setInstructions] = useState('')
   const [filterMenus, setFilterMenus] = useState({})
@@ -144,7 +144,7 @@ function SLExtractionTable({ rows: rowsProp, aiInsights: aiInsightsProp, referen
     Math.max(col.defaultWidth || 140, (col.label?.length || 8) * 8 + 48) // room for text + icons
 
   const [columnWidths, setColumnWidths] = useState(
-    columnsState.reduce((acc, col) => {
+    columns.reduce((acc, col) => {
       acc[col.id] = computeInitialWidth(col)
       return acc
     }, {})
@@ -164,24 +164,15 @@ function SLExtractionTable({ rows: rowsProp, aiInsights: aiInsightsProp, referen
     setReferencesState(safeReferences)
   }, [safeReferences])
 
-  useEffect(() => {
-    const handler = (event) => {
-      if (event?.data?.type !== 'ui_component_render') return
-      const payload = event.data.payload || {}
-
-      if (Array.isArray(payload.table)) {
-        setData(payload.table)
-        setSelected([])
-        setPage(0)
-      }
-
-      if (Array.isArray(payload.aiInsights)) setAiInsightsState(payload.aiInsights)
-      if (Array.isArray(payload.references)) setReferencesState(payload.references)
-    }
-
-    window.addEventListener('message', handler)
-    return () => window.removeEventListener('message', handler)
-  }, [])
+  React.useEffect(() => {
+    setColumnWidths((prev) => {
+      const next = { ...prev }
+      columnsState.forEach((col) => {
+        if (!next[col.id]) next[col.id] = computeInitialWidth(col)
+      })
+      return next
+    })
+  }, [columnsState])
 
   const handleSelectAll = (event) => {
     if (event.target.checked) {
@@ -313,6 +304,45 @@ function SLExtractionTable({ rows: rowsProp, aiInsights: aiInsightsProp, referen
       document.body.style.cursor = 'col-resize'
       document.body.style.userSelect = 'none'
     }
+    React.useEffect(() => {
+      const handler = (event) => {
+        if (event?.data?.type !== 'ui_component_render') return
+        const payload = event.data.payload || {}
+    
+        console.log('ui_component_render received', payload)
+    
+        const incoming = Array.isArray(payload.columns) ? payload.columns : []
+        const nextCols =
+          incoming.length > 0
+            ? incoming.map((c) => ({
+                id: c.key,
+                label: c.label,
+                minWidth: 120,
+                defaultWidth: 160,
+              }))
+            : columns
+        setColumnsState(nextCols)
+        setColumnWidths((prev) => {
+          const next = { ...prev }
+          nextCols.forEach((col) => {
+            if (!next[col.id]) next[col.id] = computeInitialWidth(col)
+          })
+          return next
+        })
+
+        if (Array.isArray(payload.rows)) {
+          setData(payload.rows)
+          setSelected([])
+          setPage(0)
+        }
+
+        if (Array.isArray(payload.aiInsights)) setAiInsightsState(payload.aiInsights)
+        if (Array.isArray(payload.references)) setReferencesState(payload.references)
+      }
+    
+      window.addEventListener('message', handler)
+      return () => window.removeEventListener('message', handler)
+    }, [])    
     return (
       <TableCell
         {...props}
