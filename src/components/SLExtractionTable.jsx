@@ -481,7 +481,14 @@ function SLExtractionTable() {
               <TableRow>
                 <TableCell
                   padding="checkbox"
-                  sx={{ backgroundColor: '#f7f7f7', width: 50, position: 'sticky', left: 0, zIndex: 3 }}
+                  sx={{
+                    backgroundColor: '#f7f7f7',
+                    width: 50,
+                    position: 'sticky',
+                    left: 0,
+                    top: 0,
+                    zIndex: 4,
+                  }}
                 >
                   <Checkbox
                     indeterminate={selectedCount > 0 && selectedCount < data.length}
@@ -497,6 +504,9 @@ function SLExtractionTable() {
                       backgroundColor: '#f7f7f7',
                       fontWeight: 700,
                       minWidth: columnWidths[column.id],
+                      position: 'sticky',
+                      top: 0,
+                      zIndex: 3,
                     }}
                   >
                     <Box
