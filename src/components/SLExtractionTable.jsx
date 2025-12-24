@@ -477,7 +477,14 @@ function SLExtractionTable() {
               minWidth: 'max-content',
             }}
           >
-            <TableHead>
+            <TableHead
+              sx={{
+                position: 'sticky',
+                top: 0,
+                zIndex: 5,
+                backgroundColor: '#f7f7f7',
+              }}
+            >
               <TableRow>
                 <TableCell
                   padding="checkbox"
