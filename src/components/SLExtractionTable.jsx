@@ -330,10 +330,6 @@ function SLExtractionTable() {
     }, {})
   )
 
-  const checkboxColumnWidth = 50
-  const sNoOffset = checkboxColumnWidth
-  const titleOffset = checkboxColumnWidth + (columnWidths['sNo'] || columns.find((c) => c.id === 'sNo')?.defaultWidth || 0)
-
   const handleSelectAll = (event) => {
     if (event.target.checked) {
       setSelected(data.map((row) => row.id))
@@ -421,6 +417,12 @@ function SLExtractionTable() {
 
   const isSelected = (id) => selected.indexOf(id) !== -1
   const selectedCount = selected.length
+
+  const checkboxColumnWidth = 50
+  const sNoWidth = columnWidths['sNo'] || columns.find((c) => c.id === 'sNo')?.defaultWidth || 0
+  const titleWidth = columnWidths['title'] || columns.find((c) => c.id === 'title')?.defaultWidth || 0
+  const sNoOffset = checkboxColumnWidth
+  const titleOffset = checkboxColumnWidth + sNoWidth
 
   // Resizable Header Cell Component
   const ResizableHeaderCell = ({ column, children, ...props }) => {
