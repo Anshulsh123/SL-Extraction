@@ -583,7 +583,7 @@ function SLExtractionTable() {
             stickyHeader
             sx={{
               tableLayout: 'auto',
-              width: 'max-content',
+              width: '100%',
               minWidth: '100%',
             }}
           >
