@@ -24,6 +24,7 @@ import {
   ListItemText,
   MenuItem,
   List,
+  TablePagination,
 } from '@mui/material'
 import {
   Delete as DeleteIcon,
@@ -323,6 +324,7 @@ function SLExtractionTable() {
   const [instructions, setInstructions] = useState('')
   const [filterMenus, setFilterMenus] = useState({})
   const filterButtonRefs = useRef({})
+  const [page, setPage] = useState(0)
   const computeInitialWidth = (col) =>
     Math.max(col.defaultWidth || 140, (col.label?.length || 8) * 8 + 48) // room for text + icons
 
@@ -425,6 +427,10 @@ function SLExtractionTable() {
 
   const isSelected = (id) => selected.indexOf(id) !== -1
   const selectedCount = selected.length
+  const rowsPerPage = 10
+  const showPagination = data.length > 20
+  const paginatedData = showPagination ? data.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage) : data
+  const maxHeight = data.length > rowsPerPage ? 580 : 'auto'
 
   // Resizable Header Cell Component
   const ResizableHeaderCell = ({ column, children, ...props }) => {
@@ -572,7 +578,7 @@ function SLExtractionTable() {
 
         <TableContainer
           sx={{
-            maxHeight: 620,
+            maxHeight,
             overflow: 'auto',
             position: 'relative',
             borderTop: '1px solid #e5e7eb',
@@ -687,7 +693,7 @@ function SLExtractionTable() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {data.map((row) => {
+              {paginatedData.map((row) => {
                 const isRowSelected = isSelected(row.id)
                 return (
                   <TableRow
@@ -728,6 +734,16 @@ function SLExtractionTable() {
             </TableBody>
           </Table>
         </TableContainer>
+        {showPagination && (
+          <TablePagination
+            component="div"
+            count={data.length}
+            page={page}
+            onPageChange={(_e, newPage) => setPage(newPage)}
+            rowsPerPage={rowsPerPage}
+            rowsPerPageOptions={[10]}
+          />
+        )}
       </Paper>
 
       {/* Filter Menus - Using custom component with manual positioning */}
