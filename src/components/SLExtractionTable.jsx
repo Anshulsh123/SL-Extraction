@@ -427,8 +427,8 @@ function SLExtractionTable() {
 
   const isSelected = (id) => selected.indexOf(id) !== -1
   const selectedCount = selected.length
-  const rowsPerPage = 10
-  const showPagination = data.length > 20
+  const rowsPerPage = 20
+  const showPagination = data.length > rowsPerPage
   const paginatedData = showPagination ? data.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage) : data
   const maxHeight = data.length > rowsPerPage ? 580 : 'auto'
 
@@ -741,7 +741,7 @@ function SLExtractionTable() {
             page={page}
             onPageChange={(_e, newPage) => setPage(newPage)}
             rowsPerPage={rowsPerPage}
-            rowsPerPageOptions={[10]}
+            rowsPerPageOptions={[rowsPerPage]}
           />
         )}
       </Paper>
