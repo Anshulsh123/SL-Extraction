@@ -519,7 +519,7 @@ function SLExtractionTable() {
         sx={{
           mb: 3,
           border: '1px solid #e5e7eb',
-          borderRadius: 12,
+          borderRadius: 8,
           overflow: 'hidden',
         }}
       >
@@ -747,7 +747,7 @@ function SLExtractionTable() {
 
       {/* AI Insights and References Section */}
       <Box sx={{ display: 'flex', gap: 3, mb: 3, alignItems: 'stretch' }}>
-        <Paper elevation={2} sx={{ flex: 1, p: 2, display: 'flex', flexDirection: 'column' }}>
+        <Paper elevation={2} sx={{ flex: 1, p: 2, display: 'flex', flexDirection: 'column', borderRadius: 8 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
             <CheckCircleIcon sx={{ color: 'green', mr: 1 }} />
             <Typography variant="h6" fontWeight="bold">
@@ -768,7 +768,7 @@ function SLExtractionTable() {
           </Box>
         </Paper>
 
-        <Paper elevation={2} sx={{ flex: 1, p: 2, display: 'flex', flexDirection: 'column' }}>
+        <Paper elevation={2} sx={{ flex: 1, p: 2, display: 'flex', flexDirection: 'column', borderRadius: 8 }}>
           <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
             References
           </Typography>
