@@ -514,7 +514,15 @@ function SLExtractionTable() {
 
   return (
     <Box sx={{ p: 3, maxWidth: '100%', mx: 'auto', position: 'relative' }}>
-      <Paper elevation={2} sx={{ mb: 3, border: '1px solid #e5e7eb' }}>
+      <Paper
+        elevation={2}
+        sx={{
+          mb: 3,
+          border: '1px solid #e5e7eb',
+          borderRadius: 12,
+          overflow: 'hidden',
+        }}
+      >
         <Box sx={{ p: 2.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Typography variant="h5" component="h1">
             Service Level Extractions
@@ -569,9 +577,17 @@ function SLExtractionTable() {
             overflow: 'auto',
             position: 'relative',
             borderTop: '1px solid #e5e7eb',
+            borderRadius: '0 0 12px 12px',
           }}
         >
-          <Table stickyHeader sx={{ tableLayout: 'auto' }}>
+          <Table
+            stickyHeader
+            sx={{
+              tableLayout: 'auto',
+              width: 'max-content',
+              minWidth: '100%',
+            }}
+          >
             <TableHead>
               <TableRow>
                 <TableCell
