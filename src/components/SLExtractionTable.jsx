@@ -578,6 +578,7 @@ function SLExtractionTable({ rows: rowsProp, aiInsights: aiInsightsProp, referen
         >
           <Table
             stickyHeader
+            size="small"
             sx={{
               tableLayout: 'auto',
               width: '100%',
@@ -612,6 +613,7 @@ function SLExtractionTable({ rows: rowsProp, aiInsights: aiInsightsProp, referen
                     left: 0,
                     top: 0,
                     zIndex: 4,
+                    py: 0.5,
                   }}
                 >
                   <Checkbox
@@ -631,6 +633,7 @@ function SLExtractionTable({ rows: rowsProp, aiInsights: aiInsightsProp, referen
                       position: 'sticky',
                       top: 0,
                       zIndex: 3,
+                      py: 0.5,
                     }}
                   >
                     <Box
@@ -732,7 +735,10 @@ function SLExtractionTable({ rows: rowsProp, aiInsights: aiInsightsProp, referen
                       '&.Mui-selected': { backgroundColor: '#eef2ff !important' },
                     }}
                   >
-                    <TableCell padding="checkbox" sx={{ position: 'sticky', left: 0, backgroundColor: 'inherit', zIndex: 2 }}>
+                    <TableCell
+                      padding="checkbox"
+                      sx={{ position: 'sticky', left: 0, backgroundColor: 'inherit', zIndex: 2, py: 0.5 }}
+                    >
                       <Checkbox
                         checked={isRowSelected}
                         onChange={() => handleSelectRow(row.id)}
@@ -749,7 +755,8 @@ function SLExtractionTable({ rows: rowsProp, aiInsights: aiInsightsProp, referen
                           textOverflow: 'ellipsis',
                           color: '#374151',
                           fontWeight: 400,
-                          fontSize: 14,
+                          fontSize: 13,
+                          py: 0.5,
                         }}
                       >
                         <TruncatedCellContent value={row[column.id]} />
