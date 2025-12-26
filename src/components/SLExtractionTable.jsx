@@ -31,6 +31,7 @@ import {
   FilterList as FilterListIcon,
   Refresh as RefreshIcon,
   Download as DownloadIcon,
+  Close as CloseIcon,
 } from '@mui/icons-material'
 
 const columns = [
@@ -75,7 +76,7 @@ const columns = [
 ]
 
 // Filter Menu Component anchored to the filter button
-function FilterMenu({ anchorEl, open, onClose, columnId, data, column }) {
+function FilterMenu({ anchorEl, open, onClose, columnId, data, column, onSelect, activeValue }) {
   if (!open || !anchorEl) return null
 
   const rect = anchorEl.getBoundingClientRect()
@@ -110,13 +111,26 @@ function FilterMenu({ anchorEl, open, onClose, columnId, data, column }) {
         },
       }}
     >
-      <MenuItem onClick={onClose}>
+      <MenuItem
+        selected={!activeValue}
+        onClick={() => {
+          onSelect(null)
+          onClose()
+        }}
+      >
         <ListItemText>All</ListItemText>
       </MenuItem>
       {Array.from(new Set(data.map((row) => row[column.id])))
         .filter((val) => val && val !== '-')
         .map((value) => (
-          <MenuItem key={value} onClick={onClose}>
+          <MenuItem
+            key={value}
+            selected={activeValue === value}
+            onClick={() => {
+              onSelect(value)
+              onClose()
+            }}
+          >
             <ListItemText>{value}</ListItemText>
           </MenuItem>
         ))}
@@ -135,6 +149,8 @@ function SLExtractionTable({ rows: rowsProp, aiInsights: aiInsightsProp, referen
   const [selected, setSelected] = useState([])
   const [columnsState, setColumnsState] = useState(columns)
   const [retriggerDialog, setRetriggerDialog] = useState({ open: false, type: null, target: null })
+  const [isClosed, setIsClosed] = useState(false)
+  const [filters, setFilters] = useState({})
   const [instructions, setInstructions] = useState('')
   const [filterMenus, setFilterMenus] = useState({})
   const filterButtonRefs = useRef({})
@@ -149,6 +165,56 @@ function SLExtractionTable({ rows: rowsProp, aiInsights: aiInsightsProp, referen
       return acc
     }, {})
   )
+
+  // Renders a single-line cell with ellipsis and shows tooltip only when truncated
+  const TruncatedCellContent = ({ value }) => {
+    const textRef = React.useRef(null)
+    const [isOverflowing, setIsOverflowing] = useState(false)
+
+    const rawValue = value ?? '-'
+    const words = typeof rawValue === 'string' ? rawValue.trim().split(/\s+/).filter(Boolean) : []
+    const wordLimit = 7
+    const truncatedByWords = words.length > wordLimit
+    const displayValue =
+      rawValue === '-' || rawValue === '' || typeof rawValue !== 'string'
+        ? rawValue
+        : truncatedByWords
+        ? `${words.slice(0, wordLimit).join(' ')}…`
+        : rawValue
+
+    React.useEffect(() => {
+      const el = textRef.current
+      if (!el) return
+      setIsOverflowing(el.scrollWidth > el.clientWidth)
+    }, [displayValue, rawValue])
+
+    const enableTooltip =
+      (truncatedByWords || isOverflowing) && rawValue !== '-' && rawValue !== ''
+
+    return (
+      <Tooltip
+        title={rawValue}
+        placement="bottom"
+        arrow
+        disableHoverListener={!enableTooltip}
+        disableFocusListener={!enableTooltip}
+        disableTouchListener={!enableTooltip}
+      >
+        <Typography
+          ref={textRef}
+          component="span"
+          sx={{
+            display: 'block',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {displayValue}
+        </Typography>
+      </Tooltip>
+    )
+  }
 
   React.useEffect(() => {
     setData(safeRows)
@@ -176,7 +242,7 @@ function SLExtractionTable({ rows: rowsProp, aiInsights: aiInsightsProp, referen
 
   const handleSelectAll = (event) => {
     if (event.target.checked) {
-      setSelected(data.map((row) => row.id))
+      setSelected(filteredData.map((row) => row.id))
     } else {
       setSelected([])
     }
@@ -251,6 +317,26 @@ function SLExtractionTable({ rows: rowsProp, aiInsights: aiInsightsProp, referen
     })
   }
 
+  const handleClose = () => {
+    window.parent.postMessage({ type: 'ui_component_close' }, '*')
+    console.log('Closing side panel')
+    setIsClosed(true)
+  }
+
+  const handleFilterSelect = (columnId, value) => {
+    setFilters((prev) => {
+      const next = { ...prev }
+      if (!value) {
+        delete next[columnId]
+      } else {
+        next[columnId] = value
+      }
+      return next
+    })
+    setPage(0)
+    setSelected([])
+  }
+
   const handleSubmit = () => {
     const tableData = {
       rows: data,
@@ -265,11 +351,23 @@ function SLExtractionTable({ rows: rowsProp, aiInsights: aiInsightsProp, referen
   }
 
   const isSelected = (id) => selected.indexOf(id) !== -1
+  const filteredData = React.useMemo(() => {
+    if (!filters || Object.keys(filters).length === 0) return data
+    return data.filter((row) =>
+      Object.entries(filters).every(([col, val]) => {
+        if (!val) return true
+        const cell = row[col]
+        return String(cell ?? '').trim() === String(val).trim()
+      })
+    )
+  }, [data, filters])
+
+  const visibleSelectedCount = filteredData.filter((row) => selected.includes(row.id)).length
   const selectedCount = selected.length
   const rowsPerPage = 20
-  const showPagination = data.length > rowsPerPage
-  const paginatedData = showPagination ? data.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage) : data
-  const maxHeight = data.length > rowsPerPage ? 580 : 'auto'
+  const showPagination = filteredData.length > rowsPerPage
+  const paginatedData = showPagination ? filteredData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage) : filteredData
+  const maxHeight = filteredData.length > rowsPerPage ? 580 : 'auto'
 
   // Resizable Header Cell Component
   const ResizableHeaderCell = ({ column, children, ...props }) => {
@@ -395,6 +493,8 @@ function SLExtractionTable({ rows: rowsProp, aiInsights: aiInsightsProp, referen
     )
   }
 
+  if (isClosed) return null
+
   return (
     <Box sx={{ p: 3, maxWidth: '100%', mx: 'auto', position: 'relative' }}>
       <Paper
@@ -402,33 +502,47 @@ function SLExtractionTable({ rows: rowsProp, aiInsights: aiInsightsProp, referen
         sx={{
           mb: 3,
           border: '1px solid #e5e7eb',
-          borderRadius: 8,
+          borderRadius: 4,
           overflow: 'hidden',
         }}
       >
-        <Box sx={{ p: 2.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Box sx={{ p: 2.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1 }}>
           <Typography variant="h5" component="h1">
             Service Level Extractions
           </Typography>
-          <Button
-            variant="outlined"
-            startIcon={<DownloadIcon />}
-            onClick={() => {
-              const header = columnsState.map((c) => c.label)
-              const rows = data.map((row) => columnsState.map((c) => row[c.id] ?? ''))
-              const sheet = XLSX.utils.aoa_to_sheet([header, ...rows])
-              const wb = XLSX.utils.book_new()
-              XLSX.utils.book_append_sheet(wb, sheet, 'SL Extractions')
-              XLSX.writeFile(wb, 'sl-extractions.xlsx')
-            }}
-            sx={{
-              borderColor: '#d1d5db',
-              color: '#374151',
-              '&:hover': { borderColor: '#9ca3af', backgroundColor: '#f8fafc' },
-            }}
-          >
-            Export
-          </Button>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Button
+              variant="outlined"
+              startIcon={<DownloadIcon />}
+              onClick={() => {
+                // Export only the table (columns + rows) as Excel
+                const header = columnsState.map((c) => c.label)
+                const rows = data.map((row) => columnsState.map((c) => row[c.id] ?? ''))
+                const sheet = XLSX.utils.aoa_to_sheet([header, ...rows])
+                // Add basic autofilter for usability (guard !ref to avoid undefined)
+                if (sheet['!ref']) {
+                  sheet['!autofilter'] = { ref: sheet['!ref'] }
+                }
+                const wb = XLSX.utils.book_new()
+                XLSX.utils.book_append_sheet(wb, sheet, 'Table')
+                XLSX.writeFile(wb, 'table.xlsx')
+              }}
+              sx={{
+                borderColor: '#d1d5db',
+                color: '#374151',
+                '&:hover': { borderColor: '#9ca3af', backgroundColor: '#f8fafc' },
+              }}
+            >
+              Export
+            </Button>
+            <IconButton
+              aria-label="Close table"
+              onClick={handleClose}
+              sx={{ color: '#6b7280', '&:hover': { color: '#374151' } }}
+            >
+              <CloseIcon />
+            </IconButton>
+          </Box>
         </Box>
 
         {selectedCount > 0 && (
@@ -455,7 +569,7 @@ function SLExtractionTable({ rows: rowsProp, aiInsights: aiInsightsProp, referen
 
         <TableContainer
           sx={{
-            maxHeight,
+            maxHeight: 600,
             overflow: 'auto',
             position: 'relative',
             borderTop: '1px solid #e5e7eb',
@@ -468,6 +582,16 @@ function SLExtractionTable({ rows: rowsProp, aiInsights: aiInsightsProp, referen
               tableLayout: 'auto',
               width: '100%',
               minWidth: 'max-content',
+              border: '1px solid #d1d5db',
+              borderCollapse: 'collapse',
+              '& .MuiTableCell-root': {
+                borderRight: '1px solid #e5e7eb',
+                borderBottom: '1px solid #e5e7eb',
+              },
+              '& .MuiTableCell-root:last-of-type': {
+                borderRight: 'none',
+              },
+              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
             }}
           >
             <TableHead
@@ -475,14 +599,14 @@ function SLExtractionTable({ rows: rowsProp, aiInsights: aiInsightsProp, referen
                 position: 'sticky',
                 top: 0,
                 zIndex: 5,
-                backgroundColor: '#f7f7f7',
+                backgroundColor: '#e5e7eb',
               }}
             >
               <TableRow>
                 <TableCell
                   padding="checkbox"
                   sx={{
-                    backgroundColor: '#f7f7f7',
+                    backgroundColor: '#e5e7eb',
                     width: 50,
                     position: 'sticky',
                     left: 0,
@@ -491,8 +615,8 @@ function SLExtractionTable({ rows: rowsProp, aiInsights: aiInsightsProp, referen
                   }}
                 >
                   <Checkbox
-                    indeterminate={selectedCount > 0 && selectedCount < data.length}
-                    checked={data.length > 0 && selectedCount === data.length}
+                    indeterminate={visibleSelectedCount > 0 && visibleSelectedCount < filteredData.length}
+                    checked={filteredData.length > 0 && visibleSelectedCount === filteredData.length}
                     onChange={handleSelectAll}
                   />
                 </TableCell>
@@ -501,8 +625,8 @@ function SLExtractionTable({ rows: rowsProp, aiInsights: aiInsightsProp, referen
                     key={column.id}
                     column={column}
                     sx={{
-                      backgroundColor: '#f7f7f7',
-                      fontWeight: 700,
+                      backgroundColor: '#e5e7eb',
+                      fontWeight: 600,
                       minWidth: columnWidths[column.id],
                       position: 'sticky',
                       top: 0,
@@ -526,7 +650,7 @@ function SLExtractionTable({ rows: rowsProp, aiInsights: aiInsightsProp, referen
                           whiteSpace: 'nowrap',
                           flexShrink: 0,
                           flex: '0 0 auto',
-                          fontWeight: 700,
+                          fontWeight: 500,
                           color: '#6b7280',
                         }}
                       >
@@ -586,7 +710,16 @@ function SLExtractionTable({ rows: rowsProp, aiInsights: aiInsightsProp, referen
                 ))}
               </TableRow>
             </TableHead>
-            <TableBody>
+            <TableBody
+              sx={{
+                '& .MuiTableRow-root:nth-of-type(odd):not(.Mui-selected)': {
+                  backgroundColor: '#f8fafc',
+                },
+                '& .MuiTableRow-root:nth-of-type(even):not(.Mui-selected)': {
+                  backgroundColor: '#ffffff',
+                },
+              }}
+            >
               {paginatedData.map((row) => {
                 const isRowSelected = isSelected(row.id)
                 return (
@@ -599,7 +732,7 @@ function SLExtractionTable({ rows: rowsProp, aiInsights: aiInsightsProp, referen
                       '&.Mui-selected': { backgroundColor: '#eef2ff !important' },
                     }}
                   >
-                    <TableCell padding="checkbox" sx={{ position: 'sticky', left: 0, backgroundColor: '#fff', zIndex: 2 }}>
+                    <TableCell padding="checkbox" sx={{ position: 'sticky', left: 0, backgroundColor: 'inherit', zIndex: 2 }}>
                       <Checkbox
                         checked={isRowSelected}
                         onChange={() => handleSelectRow(row.id)}
@@ -614,12 +747,12 @@ function SLExtractionTable({ rows: rowsProp, aiInsights: aiInsightsProp, referen
                           maxWidth: 'unset',
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
-                          color: '#1f2933',
-                          fontWeight: 600,
-                          fontSize: 13,
+                          color: '#374151',
+                          fontWeight: 400,
+                          fontSize: 14,
                         }}
                       >
-                        {row[column.id] || '-'}
+                        <TruncatedCellContent value={row[column.id]} />
                       </TableCell>
                     ))}
                   </TableRow>
@@ -631,7 +764,7 @@ function SLExtractionTable({ rows: rowsProp, aiInsights: aiInsightsProp, referen
         {showPagination && (
           <TablePagination
             component="div"
-            count={data.length}
+            count={filteredData.length}
             page={page}
             onPageChange={(_e, newPage) => setPage(newPage)}
             rowsPerPage={rowsPerPage}
@@ -649,6 +782,8 @@ function SLExtractionTable({ rows: rowsProp, aiInsights: aiInsightsProp, referen
             anchorEl={filterMenus[column.id]}
             open={Boolean(filterMenus[column.id])}
             onClose={() => handleFilterClose(column.id)}
+            onSelect={(val) => handleFilterSelect(column.id, val)}
+            activeValue={filters[column.id]}
             columnId={column.id}
             column={column}
             data={data}
@@ -657,7 +792,7 @@ function SLExtractionTable({ rows: rowsProp, aiInsights: aiInsightsProp, referen
 
       {/* AI Insights and References Section */}
       <Box sx={{ display: 'flex', gap: 3, mb: 3, alignItems: 'stretch' }}>
-        <Paper elevation={2} sx={{ flex: 1, p: 2, display: 'flex', flexDirection: 'column', borderRadius: 8 }}>
+        <Paper elevation={2} sx={{ flex: 1, p: 2, display: 'flex', flexDirection: 'column', borderRadius: 4 }}>
           <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
             AI Insights
           </Typography>
@@ -675,7 +810,7 @@ function SLExtractionTable({ rows: rowsProp, aiInsights: aiInsightsProp, referen
           </Box>
         </Paper>
 
-        <Paper elevation={2} sx={{ flex: 1, p: 2, display: 'flex', flexDirection: 'column', borderRadius: 8 }}>
+        <Paper elevation={2} sx={{ flex: 1, p: 2, display: 'flex', flexDirection: 'column', borderRadius: 4 }}>
           <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
             References
           </Typography>
