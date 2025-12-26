@@ -792,17 +792,19 @@ function SLExtractionTable({ rows: rowsProp, aiInsights: aiInsightsProp, referen
 
       {/* AI Insights and References Section */}
       <Box sx={{ display: 'flex', gap: 3, mb: 3, alignItems: 'stretch' }}>
-        <Paper elevation={2} sx={{ flex: 1, p: 2, display: 'flex', flexDirection: 'column', borderRadius: 4 }}>
+        <Paper
+          elevation={2}
+          sx={{ flex: 1, p: 2, display: 'flex', flexDirection: 'column', borderRadius: 4, height: '100%' }}
+        >
           <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
             AI Insights
           </Typography>
-          <Box component="ul" sx={{ pl: 3, m: 0, flex: 1 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, flex: 1 }}>
             {aiInsightsState.map((insight, index) => (
               <Typography
                 key={index}
-                component="li"
                 variant="body2"
-                sx={{ mb: 1, color: 'text.secondary' }}
+                sx={{ color: 'text.secondary', whiteSpace: 'pre-wrap' }}
               >
                 {insight}
               </Typography>
@@ -810,17 +812,20 @@ function SLExtractionTable({ rows: rowsProp, aiInsights: aiInsightsProp, referen
           </Box>
         </Paper>
 
-        <Paper elevation={2} sx={{ flex: 1, p: 2, display: 'flex', flexDirection: 'column', borderRadius: 4 }}>
+        <Paper
+          elevation={2}
+          sx={{ flex: 1, p: 2, display: 'flex', flexDirection: 'column', borderRadius: 4, height: '100%' }}
+        >
           <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
             References
           </Typography>
-          <Box sx={{ flex: 1 }}>
+          <Box sx={{ flex: 1, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
             {referencesState.map((ref, index) => (
               <Chip
                 key={index}
                 label={ref}
                 variant="outlined"
-                sx={{ mr: 1, mb: 1 }}
+                sx={{ borderRadius: 2, maxWidth: '100%' }}
                 size="small"
               />
             ))}
