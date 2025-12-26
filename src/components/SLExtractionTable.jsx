@@ -507,7 +507,7 @@ function SLExtractionTable({ rows: rowsProp, aiInsights: aiInsightsProp, referen
         }}
       >
         <Box sx={{ p: 2.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1 }}>
-          <Typography variant="h5" component="h1">
+          <Typography variant="h6" component="h1" sx={{ fontWeight: 400, fontSize: 18, lineHeight: 1.3 }}>
             Service Level Extractions
           </Typography>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -583,6 +583,7 @@ function SLExtractionTable({ rows: rowsProp, aiInsights: aiInsightsProp, referen
               tableLayout: 'auto',
               width: '100%',
               minWidth: 'max-content',
+              fontSize: 13,
               border: '1px solid #d1d5db',
               borderCollapse: 'collapse',
               '& .MuiTableCell-root': {
@@ -628,7 +629,7 @@ function SLExtractionTable({ rows: rowsProp, aiInsights: aiInsightsProp, referen
                     column={column}
                     sx={{
                       backgroundColor: '#e5e7eb',
-                      fontWeight: 600,
+                      fontWeight: 400,
                       minWidth: columnWidths[column.id],
                       position: 'sticky',
                       top: 0,
@@ -653,7 +654,8 @@ function SLExtractionTable({ rows: rowsProp, aiInsights: aiInsightsProp, referen
                           whiteSpace: 'nowrap',
                           flexShrink: 0,
                           flex: '0 0 auto',
-                          fontWeight: 500,
+                          fontWeight: 400,
+                          fontSize: 13,
                           color: '#6b7280',
                         }}
                       >
@@ -803,7 +805,7 @@ function SLExtractionTable({ rows: rowsProp, aiInsights: aiInsightsProp, referen
           elevation={2}
           sx={{ flex: 1, p: 2, display: 'flex', flexDirection: 'column', borderRadius: 4, height: '100%' }}
         >
-          <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
+          <Typography variant="h6" sx={{ mb: 2, fontWeight: 400 }}>
             AI Insights
           </Typography>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, flex: 1 }}>
@@ -823,7 +825,7 @@ function SLExtractionTable({ rows: rowsProp, aiInsights: aiInsightsProp, referen
           elevation={2}
           sx={{ flex: 1, p: 2, display: 'flex', flexDirection: 'column', borderRadius: 4, height: '100%' }}
         >
-          <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
+          <Typography variant="h6" sx={{ mb: 2, fontWeight: 400 }}>
             References
           </Typography>
           <Box sx={{ flex: 1, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
@@ -841,7 +843,7 @@ function SLExtractionTable({ rows: rowsProp, aiInsights: aiInsightsProp, referen
       </Box>
 
       {/* Submit Button */}
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3, width: '100%', pr: 1 }}>
         <Button
           variant="contained"
           color="primary"
