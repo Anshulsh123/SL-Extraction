@@ -4,8 +4,8 @@ import react from '@vitejs/plugin-react'
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
-  // Use absolute base so assets load correctly on GitHub Pages
-  base: '/SL-Extraction/',
+  // Use relative base for bundled assets
+  base: './',
   server: {
     port: 5173,
     open: true
