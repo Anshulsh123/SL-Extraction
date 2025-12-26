@@ -167,29 +167,20 @@ function SLExtractionTable({ rows: rowsProp, aiInsights: aiInsightsProp, referen
   )
 
   // Renders a single-line cell with ellipsis and shows tooltip only when truncated
-  const TruncatedCellContent = ({ value }) => {
+  const TruncatedCellContent = ({ value, width }) => {
     const textRef = React.useRef(null)
     const [isOverflowing, setIsOverflowing] = useState(false)
 
     const rawValue = value ?? '-'
-    const words = typeof rawValue === 'string' ? rawValue.trim().split(/\s+/).filter(Boolean) : []
-    const wordLimit = 7
-    const truncatedByWords = words.length > wordLimit
-    const displayValue =
-      rawValue === '-' || rawValue === '' || typeof rawValue !== 'string'
-        ? rawValue
-        : truncatedByWords
-        ? `${words.slice(0, wordLimit).join(' ')}…`
-        : rawValue
+    const displayValue = rawValue
 
     React.useEffect(() => {
       const el = textRef.current
       if (!el) return
       setIsOverflowing(el.scrollWidth > el.clientWidth)
-    }, [displayValue, rawValue])
+    }, [displayValue, rawValue, width])
 
-    const enableTooltip =
-      (truncatedByWords || isOverflowing) && rawValue !== '-' && rawValue !== ''
+    const enableTooltip = isOverflowing && rawValue !== '-' && rawValue !== ''
 
     return (
       <Tooltip
@@ -761,7 +752,10 @@ function SLExtractionTable({ rows: rowsProp, aiInsights: aiInsightsProp, referen
                           py: 0.5,
                         }}
                       >
-                        <TruncatedCellContent value={row[column.id]} />
+                        <TruncatedCellContent
+                          value={row[column.id]}
+                          width={columnWidths[column.id] || column.defaultWidth}
+                        />
                       </TableCell>
                     ))}
                   </TableRow>
