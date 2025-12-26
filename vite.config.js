@@ -8,11 +8,6 @@ export default defineConfig({
   base: '/SL-Extraction/',
   server: {
     port: 5173,
-    open: '/index.html',
-  },
-  build: {
-    rollupOptions: {
-      input: 'index.html',
-    },
-  },
+    open: true
+  }
 })
