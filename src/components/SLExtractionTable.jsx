@@ -1,5 +1,4 @@
 import React, { useState, useRef } from 'react'
-import * as XLSX from 'xlsx'
 import {
   Box,
   Paper,
@@ -24,59 +23,150 @@ import {
   ListItemText,
   MenuItem,
   List,
-  TablePagination,
 } from '@mui/material'
 import {
   Delete as DeleteIcon,
   FilterList as FilterListIcon,
   Refresh as RefreshIcon,
   Download as DownloadIcon,
-  Close as CloseIcon,
+  CheckCircle as CheckCircleIcon,
 } from '@mui/icons-material'
 
+// Sample data structure - this would come from the agent
+const initialData = [
+  {
+    id: 1,
+    sNo: 1,
+    title: 'Severity Level 1 Incident Response',
+    lineOfBusiness: '-',
+    programProject: 'Skype Managed Services',
+    serviceLevelId: 'SL0001',
+    documentName: 'EXHIBIT B',
+    serviceLevelDescription: 'Vendor will respond to Severity Level 1 incidents within 1 hour',
+    slType: 'SL',
+    si: 'In',
+  },
+  {
+    id: 2,
+    sNo: 2,
+    title: 'Severity Level 2 Incident Response',
+    lineOfBusiness: '-',
+    programProject: 'Skype Managed Services',
+    serviceLevelId: 'SL0002',
+    documentName: 'EXHIBIT B',
+    serviceLevelDescription: 'Vendor will respond to Severity Level 2 incidents within 4 hours',
+    slType: 'SL',
+    si: 'In',
+  },
+  {
+    id: 3,
+    sNo: 3,
+    title: 'Severity Level 1 Priority Resolution',
+    lineOfBusiness: '-',
+    programProject: 'Skype Managed Services',
+    serviceLevelId: 'SL0003',
+    documentName: 'EXHIBIT B',
+    serviceLevelDescription: 'Vendor will resolve Severity Level 1 incidents within 24 hours',
+    slType: 'SL',
+    si: 'In',
+  },
+  {
+    id: 4,
+    sNo: 4,
+    title: 'Severity Level 2 Priority Resolution',
+    lineOfBusiness: '-',
+    programProject: 'Skype Managed Services',
+    serviceLevelId: 'SL0004',
+    documentName: 'EXHIBIT B',
+    serviceLevelDescription: 'Vendor will resolve Severity Level 2 incidents within 48 hours',
+    slType: 'SL',
+    si: 'In',
+  },
+  {
+    id: 5,
+    sNo: 5,
+    title: 'Severity Level 1 Priority Resolution',
+    lineOfBusiness: '-',
+    programProject: 'Skype Managed Services',
+    serviceLevelId: 'SL0005',
+    documentName: 'EXHIBIT B',
+    serviceLevelDescription: 'Vendor will resolve Severity Level 1 incidents within 24 hours',
+    slType: 'SL',
+    si: 'In',
+  },
+  {
+    id: 6,
+    sNo: 6,
+    title: 'Severity Level 2 Priority Resolution',
+    lineOfBusiness: '-',
+    programProject: 'Skype Managed Services',
+    serviceLevelId: 'SL0006',
+    documentName: 'EXHIBIT B',
+    serviceLevelDescription: 'Vendor will resolve Severity Level 2 incidents within 48 hours',
+    slType: 'SL',
+    si: 'In',
+  },
+  {
+    id: 7,
+    sNo: 7,
+    title: 'Severity Level 1 Priority Resolution',
+    lineOfBusiness: '-',
+    programProject: 'Skype Managed Services',
+    serviceLevelId: 'SL0007',
+    documentName: 'EXHIBIT B',
+    serviceLevelDescription: 'Vendor will resolve Severity Level 1 incidents within 24 hours',
+    slType: 'SL',
+    si: 'In',
+  },
+  {
+    id: 8,
+    sNo: 8,
+    title: 'Severity Level 2 Priority Resolution',
+    lineOfBusiness: '-',
+    programProject: 'Skype Managed Services',
+    serviceLevelId: 'SL0008',
+    documentName: 'EXHIBIT B',
+    serviceLevelDescription: 'Vendor will resolve Severity Level 2 incidents within 48 hours',
+    slType: 'SL',
+    si: 'In',
+  },
+]
+
+// Fields that have taxonomies (should show filter button)
+const taxonomyFields = ['lineOfBusiness', 'programProject', 'slType', 'si']
+
 const columns = [
-  { id: 'sNo', label: 'Sno', minWidth: 70, defaultWidth: 80 },
-  { id: 'title', label: 'Title / SL Name', minWidth: 200, defaultWidth: 220 },
-  { id: 'lineOfBusiness', label: 'Line of Business (LOB)', minWidth: 160, defaultWidth: 180 },
-  { id: 'programProject', label: 'Program/ Project', minWidth: 180, defaultWidth: 200 },
-  { id: 'serviceLevelId', label: 'Service Level ID (SL ID)', minWidth: 160, defaultWidth: 180 },
-  { id: 'documentName', label: 'Document Name/ID', minWidth: 150, defaultWidth: 170 },
-  { id: 'serviceLevelDescription', label: 'Service Level Description', minWidth: 320, defaultWidth: 340 },
-  { id: 'slType', label: 'SL Type', minWidth: 100, defaultWidth: 120 },
-  { id: 'slCategory', label: 'SL Category', minWidth: 140, defaultWidth: 160 },
-  { id: 'slSubcategory', label: 'SL Subcategory', minWidth: 150, defaultWidth: 170 },
-  { id: 'priority', label: 'Priority', minWidth: 100, defaultWidth: 120 },
-  { id: 'unitOfMeasurement', label: 'Unit of Measurement', minWidth: 150, defaultWidth: 170 },
-  { id: 'minOrMax', label: 'Minimum/ Maximum?', minWidth: 140, defaultWidth: 160 },
-  { id: 'expectedTargetValue', label: 'Expected/Target Value', minWidth: 150, defaultWidth: 170 },
-  { id: 'thresholdValueFloor', label: 'Threshold Value (Floor)', minWidth: 170, defaultWidth: 190 },
-  { id: 'thresholdValueBasement', label: 'Threshold Value 2 (Basement)', minWidth: 200, defaultWidth: 220 },
-  { id: 'measurementWindow', label: 'Measurement Window', minWidth: 150, defaultWidth: 170 },
-  { id: 'computationFrequency', label: 'Computation Frequency', minWidth: 170, defaultWidth: 190 },
-  { id: 'exclusions', label: 'Exclusions', minWidth: 180, defaultWidth: 200 },
-  { id: 'slCreditApplicable', label: 'SL Credit Applicable?', minWidth: 170, defaultWidth: 190 },
-  { id: 'slCreditClauseDescription', label: 'SL Credit Clause Description', minWidth: 220, defaultWidth: 240 },
-  { id: 'slCreditMode', label: 'SL Credit Mode', minWidth: 150, defaultWidth: 170 },
-  { id: 'slCreditFormula', label: 'SL Credit Formula', minWidth: 200, defaultWidth: 220 },
-  { id: 'slCreditFrequency', label: 'SL Credit Frequency', minWidth: 170, defaultWidth: 190 },
-  { id: 'earnbackApplicable', label: 'Earnback Applicable?', minWidth: 170, defaultWidth: 190 },
-  { id: 'earnbackClauseDescription', label: 'Earnback Clause Description', minWidth: 220, defaultWidth: 240 },
-  { id: 'earnbackMode', label: 'Earnback Mode', minWidth: 150, defaultWidth: 170 },
-  { id: 'earnbackFrequency', label: 'Earnback Frequency', minWidth: 170, defaultWidth: 190 },
-  { id: 'serviceLevelDefault', label: 'Service Level Default', minWidth: 200, defaultWidth: 220 },
-  { id: 'persistentDefaultClause', label: 'Persistent Default Clause', minWidth: 220, defaultWidth: 240 },
-  { id: 'terminationTrigger', label: 'Termination Trigger', minWidth: 200, defaultWidth: 220 },
-  { id: 'slStartDate', label: 'SL Start Date', minWidth: 140, defaultWidth: 150 },
-  { id: 'slEndDates', label: 'SL End Dates', minWidth: 140, defaultWidth: 150 },
-  { id: 'slEffectiveDate', label: 'SL Effective Date', minWidth: 150, defaultWidth: 160 },
-  { id: 'reportingFrequency', label: 'Reporting Frequency', minWidth: 160, defaultWidth: 180 },
-  { id: 'slOwner', label: 'SL Owner', minWidth: 140, defaultWidth: 150 },
-  { id: 'slApprover', label: 'SL Approver', minWidth: 140, defaultWidth: 150 },
-  { id: 'supplierResponsibility', label: 'Supplier Responsibility?', minWidth: 170, defaultWidth: 190 },
+  { id: 'sNo', label: 'S. No.', minWidth: 80, defaultWidth: 80 },
+  { id: 'title', label: 'Title/SL Name', minWidth: 200, defaultWidth: 200 },
+  { id: 'lineOfBusiness', label: 'Line of Business', minWidth: 150, defaultWidth: 150 },
+  { id: 'programProject', label: 'Program/Project', minWidth: 180, defaultWidth: 180 },
+  { id: 'serviceLevelId', label: 'Service Level ID', minWidth: 150, defaultWidth: 150 },
+  { id: 'documentName', label: 'Document Name/ID', minWidth: 150, defaultWidth: 150 },
+  { id: 'serviceLevelDescription', label: 'Service Level Description', minWidth: 300, defaultWidth: 300 },
+  { id: 'slType', label: 'SL Type', minWidth: 100, defaultWidth: 100 },
+  { id: 'si', label: 'SI', minWidth: 80, defaultWidth: 80 },
+]
+
+const aiInsights = [
+  'Amount at Risk: 15% of Charges (excluding out-of-pocket expenses) per month.',
+  'Credit Calculation: Each Service Level assigned % credit allocation. Credits for Defaults = SL Allocation % x Amount at Risk. Max credits/month capped at full Amount at Risk. Regional allocation for availability.',
+  'Earnback: Not specified in the contract.',
+  'Termination: Sirion may terminate if same Service Level missed 3 consecutive months or 4 in 12 months. 30 days\' written notice after right arises.',
+  'Default and Additional Remedies: Credits are sole remedy unless Service Level Floor breached or all credits for month triggered; in those cases, direct damages up to liability cap also available. Service Level Default defined as failure to meet SL, with specific exceptions.',
+]
+
+const references = [
+  'Exhibit B SERVICE LEVELS',
+  'Attachment B-1 to Exhibit B Service Level Metrics',
+  'Attachment B-2 to Exhibit B Vendor Severity Rating to SIRION Priority Crosswalk',
+  'Exhibit C CHARGES',
+  'Exhibit A PROJECT SERVICES',
+  'Annex 1',
+  'Exhibit D GOVERNANCE',
 ]
 
 // Filter Menu Component anchored to the filter button
-function FilterMenu({ anchorEl, open, onClose, columnId, data, column, onSelect, activeValue }) {
+function FilterMenu({ anchorEl, open, onClose, columnId, data, column }) {
   if (!open || !anchorEl) return null
 
   const rect = anchorEl.getBoundingClientRect()
@@ -111,26 +201,13 @@ function FilterMenu({ anchorEl, open, onClose, columnId, data, column, onSelect,
         },
       }}
     >
-      <MenuItem
-        selected={!activeValue}
-        onClick={() => {
-          onSelect(null)
-          onClose()
-        }}
-      >
+      <MenuItem onClick={onClose}>
         <ListItemText>All</ListItemText>
       </MenuItem>
       {Array.from(new Set(data.map((row) => row[column.id])))
         .filter((val) => val && val !== '-')
         .map((value) => (
-          <MenuItem
-            key={value}
-            selected={activeValue === value}
-            onClick={() => {
-              onSelect(value)
-              onClose()
-            }}
-          >
+          <MenuItem key={value} onClick={onClose}>
             <ListItemText>{value}</ListItemText>
           </MenuItem>
         ))}
@@ -138,102 +215,23 @@ function FilterMenu({ anchorEl, open, onClose, columnId, data, column, onSelect,
   )
 }
 
-function SLExtractionTable({ rows: rowsProp, aiInsights: aiInsightsProp, references: referencesProp }) {
-  const safeRows = React.useMemo(() => rowsProp ?? [], [rowsProp])
-  const safeAiInsights = React.useMemo(() => aiInsightsProp ?? [], [aiInsightsProp])
-  const safeReferences = React.useMemo(() => referencesProp ?? [], [referencesProp])
-
-  const [data, setData] = useState(safeRows)
-  const [aiInsightsState, setAiInsightsState] = useState(safeAiInsights)
-  const [referencesState, setReferencesState] = useState(safeReferences)
+function SLExtractionTable() {
+  const [data, setData] = useState(initialData)
   const [selected, setSelected] = useState([])
-  const [columnsState, setColumnsState] = useState(columns)
   const [retriggerDialog, setRetriggerDialog] = useState({ open: false, type: null, target: null })
-  const [isClosed, setIsClosed] = useState(false)
-  const [filters, setFilters] = useState({})
   const [instructions, setInstructions] = useState('')
   const [filterMenus, setFilterMenus] = useState({})
   const filterButtonRefs = useRef({})
-  const [page, setPage] = useState(0)
-  const taxonomyFields = React.useMemo(() => columnsState.map((c) => c.id), [columnsState])
-  const computeInitialWidth = (col) =>
-    Math.max(col.defaultWidth || 140, (col.label?.length || 8) * 8 + 48) // room for text + icons
-
   const [columnWidths, setColumnWidths] = useState(
     columns.reduce((acc, col) => {
-      acc[col.id] = computeInitialWidth(col)
+      acc[col.id] = col.defaultWidth
       return acc
     }, {})
   )
 
-  // Renders a single-line cell with ellipsis and shows tooltip only when truncated
-  const TruncatedCellContent = ({ value, width }) => {
-    const textRef = React.useRef(null)
-    const [isOverflowing, setIsOverflowing] = useState(false)
-
-    const rawValue = value ?? '-'
-    const displayValue = rawValue
-
-    React.useEffect(() => {
-      const el = textRef.current
-      if (!el) return
-      setIsOverflowing(el.scrollWidth > el.clientWidth)
-    }, [displayValue, rawValue, width])
-
-    const enableTooltip = isOverflowing && rawValue !== '-' && rawValue !== ''
-
-    return (
-      <Tooltip
-        title={rawValue}
-        placement="bottom"
-        arrow
-        disableHoverListener={!enableTooltip}
-        disableFocusListener={!enableTooltip}
-        disableTouchListener={!enableTooltip}
-      >
-        <Typography
-          ref={textRef}
-          component="span"
-          sx={{
-            display: 'block',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          {displayValue}
-        </Typography>
-      </Tooltip>
-    )
-  }
-
-  React.useEffect(() => {
-    setData(safeRows)
-    setSelected([])
-    setPage(0)
-  }, [safeRows])
-
-  React.useEffect(() => {
-    setAiInsightsState(safeAiInsights)
-  }, [safeAiInsights])
-
-  React.useEffect(() => {
-    setReferencesState(safeReferences)
-  }, [safeReferences])
-
-  React.useEffect(() => {
-    setColumnWidths((prev) => {
-      const next = { ...prev }
-      columnsState.forEach((col) => {
-        if (!next[col.id]) next[col.id] = computeInitialWidth(col)
-      })
-      return next
-    })
-  }, [columnsState])
-
   const handleSelectAll = (event) => {
     if (event.target.checked) {
-      setSelected(filteredData.map((row) => row.id))
+      setSelected(data.map((row) => row.id))
     } else {
       setSelected([])
     }
@@ -308,24 +306,34 @@ function SLExtractionTable({ rows: rowsProp, aiInsights: aiInsightsProp, referen
     })
   }
 
-  const handleClose = () => {
-    window.parent.postMessage({ type: 'ui_component_close' }, '*')
-    console.log('Closing side panel')
-    setIsClosed(true)
-  }
+  // Truncate cell text to a few words, show tooltip when truncated
+  const TruncatedCellContent = ({ value }) => {
+    const rawValue = value ?? '-'
+    const words = typeof rawValue === 'string' ? rawValue.trim().split(/\s+/).filter(Boolean) : []
+    const wordLimit = 7
+    const truncated = words.length > wordLimit
+    const displayValue =
+      rawValue === '-' || rawValue === '' || typeof rawValue !== 'string'
+        ? rawValue
+        : truncated
+          ? `${words.slice(0, wordLimit).join(' ')}…`
+          : rawValue
 
-  const handleFilterSelect = (columnId, value) => {
-    setFilters((prev) => {
-      const next = { ...prev }
-      if (!value) {
-        delete next[columnId]
-      } else {
-        next[columnId] = value
-      }
-      return next
-    })
-    setPage(0)
-    setSelected([])
+    return (
+      <Tooltip title={rawValue} disableHoverListener={!truncated} disableFocusListener={!truncated} disableTouchListener={!truncated}>
+        <Typography
+          component="span"
+          sx={{
+            display: 'block',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {displayValue}
+        </Typography>
+      </Tooltip>
+    )
   }
 
   const handleSubmit = () => {
@@ -342,23 +350,7 @@ function SLExtractionTable({ rows: rowsProp, aiInsights: aiInsightsProp, referen
   }
 
   const isSelected = (id) => selected.indexOf(id) !== -1
-  const filteredData = React.useMemo(() => {
-    if (!filters || Object.keys(filters).length === 0) return data
-    return data.filter((row) =>
-      Object.entries(filters).every(([col, val]) => {
-        if (!val) return true
-        const cell = row[col]
-        return String(cell ?? '').trim() === String(val).trim()
-      })
-    )
-  }, [data, filters])
-
-  const visibleSelectedCount = filteredData.filter((row) => selected.includes(row.id)).length
   const selectedCount = selected.length
-  const rowsPerPage = 20
-  const showPagination = filteredData.length > rowsPerPage
-  const paginatedData = showPagination ? filteredData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage) : filteredData
-  const maxHeight = filteredData.length > rowsPerPage ? 580 : 'auto'
 
   // Resizable Header Cell Component
   const ResizableHeaderCell = ({ column, children, ...props }) => {
@@ -393,45 +385,7 @@ function SLExtractionTable({ rows: rowsProp, aiInsights: aiInsightsProp, referen
       document.body.style.cursor = 'col-resize'
       document.body.style.userSelect = 'none'
     }
-    React.useEffect(() => {
-      const handler = (event) => {
-        if (event?.data?.type !== 'ui_component_render') return
-        const payload = event.data.payload || {}
-    
-        console.log('ui_component_render received', payload)
-    
-        const incoming = Array.isArray(payload.columns) ? payload.columns : []
-        const nextCols =
-          incoming.length > 0
-            ? incoming.map((c) => ({
-                id: c.key,
-                label: c.label,
-                minWidth: 120,
-                defaultWidth: 160,
-              }))
-            : columns
-        setColumnsState(nextCols)
-        setColumnWidths((prev) => {
-          const next = { ...prev }
-          nextCols.forEach((col) => {
-            if (!next[col.id]) next[col.id] = computeInitialWidth(col)
-          })
-          return next
-        })
 
-        if (Array.isArray(payload.rows)) {
-          setData(payload.rows)
-          setSelected([])
-          setPage(0)
-        }
-
-        if (Array.isArray(payload.aiInsights)) setAiInsightsState(payload.aiInsights)
-        if (Array.isArray(payload.references)) setReferencesState(payload.references)
-      }
-    
-      window.addEventListener('message', handler)
-      return () => window.removeEventListener('message', handler)
-    }, [])    
     return (
       <TableCell
         {...props}
@@ -484,60 +438,34 @@ function SLExtractionTable({ rows: rowsProp, aiInsights: aiInsightsProp, referen
     )
   }
 
-  if (isClosed) return null
-
   return (
     <Box sx={{ p: 3, maxWidth: '100%', mx: 'auto', position: 'relative' }}>
-      <Paper
-        elevation={2}
-        sx={{
-          mb: 3,
-          border: '1px solid #e5e7eb',
-          borderRadius: 4,
-          overflow: 'hidden',
-        }}
-      >
-        <Box sx={{ p: 2.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1 }}>
-          <Typography variant="h6" component="h1" sx={{ fontWeight: 400, fontSize: 18, lineHeight: 1.3 }}>
+      {/* Service Level Extractions Section */}
+      <Paper elevation={2} sx={{ mb: 3 }}>
+        <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Typography variant="h5" component="h1" fontWeight="bold">
             Service Level Extractions
           </Typography>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Button
-              variant="outlined"
-              startIcon={<DownloadIcon />}
-              onClick={() => {
-                // Export only the table (columns + rows) as Excel
-                const header = columnsState.map((c) => c.label)
-                const rows = data.map((row) => columnsState.map((c) => row[c.id] ?? ''))
-                const sheet = XLSX.utils.aoa_to_sheet([header, ...rows])
-                // Add basic autofilter for usability (guard !ref to avoid undefined)
-                if (sheet['!ref']) {
-                  sheet['!autofilter'] = { ref: sheet['!ref'] }
-                }
-                const wb = XLSX.utils.book_new()
-                XLSX.utils.book_append_sheet(wb, sheet, 'Table')
-                XLSX.writeFile(wb, 'table.xlsx')
-              }}
-              sx={{
-                borderColor: '#d1d5db',
-                color: '#374151',
-                '&:hover': { borderColor: '#9ca3af', backgroundColor: '#f8fafc' },
-              }}
-            >
-              Export
-            </Button>
-            <IconButton
-              aria-label="Close table"
-              onClick={handleClose}
-              sx={{ color: '#6b7280', '&:hover': { color: '#374151' } }}
-            >
-              <CloseIcon />
-            </IconButton>
-          </Box>
+          <Button
+            variant="outlined"
+            startIcon={<DownloadIcon />}
+            onClick={() => {
+              const json = JSON.stringify(data, null, 2)
+              const blob = new Blob([json], { type: 'application/json' })
+              const url = URL.createObjectURL(blob)
+              const a = document.createElement('a')
+              a.href = url
+              a.download = 'sl-extractions.json'
+              a.click()
+            }}
+          >
+            Export
+          </Button>
         </Box>
 
+        {/* Multi-select action buttons */}
         {selectedCount > 0 && (
-          <Box sx={{ px: 2.5, pb: 1, display: 'flex', gap: 1 }}>
+          <Box sx={{ px: 2, pb: 1, display: 'flex', gap: 1 }}>
             <Button
               variant="contained"
               color="error"
@@ -563,69 +491,25 @@ function SLExtractionTable({ rows: rowsProp, aiInsights: aiInsightsProp, referen
             maxHeight: 600,
             overflow: 'auto',
             position: 'relative',
-            borderTop: '1px solid #e5e7eb',
-            pr: 0,
           }}
         >
-          <Table
-            stickyHeader
-            size="small"
-            sx={{
-              tableLayout: 'auto',
-              width: '100%',
-              minWidth: 'max-content',
-              fontSize: 13,
-              border: '1px solid #d1d5db',
-              borderCollapse: 'collapse',
-              '& .MuiTableCell-root': {
-                borderRight: '1px solid #e5e7eb',
-                borderBottom: '1px solid #e5e7eb',
-              },
-              '& .MuiTableCell-root:last-of-type': {
-                borderRight: 'none',
-              },
-              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-            }}
-          >
-            <TableHead
-              sx={{
-                position: 'sticky',
-                top: 0,
-                zIndex: 5,
-                backgroundColor: '#e5e7eb',
-              }}
-            >
+          <Table stickyHeader sx={{ tableLayout: 'fixed' }}>
+            <TableHead>
               <TableRow>
-                <TableCell
-                  padding="checkbox"
-                  sx={{
-                    backgroundColor: '#e5e7eb',
-                    width: 50,
-                    position: 'sticky',
-                    left: 0,
-                    top: 0,
-                    zIndex: 4,
-                    py: 0.5,
-                  }}
-                >
+                <TableCell padding="checkbox" sx={{ backgroundColor: '#f5f5f5', width: 50 }}>
                   <Checkbox
-                    indeterminate={visibleSelectedCount > 0 && visibleSelectedCount < filteredData.length}
-                    checked={filteredData.length > 0 && visibleSelectedCount === filteredData.length}
+                    indeterminate={selectedCount > 0 && selectedCount < data.length}
+                    checked={data.length > 0 && selectedCount === data.length}
                     onChange={handleSelectAll}
                   />
                 </TableCell>
-                {columnsState.map((column) => (
+                {columns.map((column) => (
                   <ResizableHeaderCell
                     key={column.id}
                     column={column}
                     sx={{
-                      backgroundColor: '#e5e7eb',
-                      fontWeight: 400,
-                      minWidth: columnWidths[column.id],
-                      position: 'sticky',
-                      top: 0,
-                      zIndex: 3,
-                      py: 0.5,
+                      backgroundColor: '#f5f5f5',
+                      fontWeight: 'bold',
                     }}
                   >
                     <Box
@@ -633,7 +517,7 @@ function SLExtractionTable({ rows: rowsProp, aiInsights: aiInsightsProp, referen
                         display: 'flex',
                         alignItems: 'center',
                         gap: 0.5,
-                        pr: 3,
+                        pr: 2.5,
                         width: '100%',
                         position: 'relative',
                         zIndex: 2,
@@ -645,9 +529,7 @@ function SLExtractionTable({ rows: rowsProp, aiInsights: aiInsightsProp, referen
                           whiteSpace: 'nowrap',
                           flexShrink: 0,
                           flex: '0 0 auto',
-                          fontWeight: 400,
-                          fontSize: 13,
-                          color: '#6b7280',
+                          fontWeight: 600,
                         }}
                       >
                         {column.label}
@@ -675,12 +557,7 @@ function SLExtractionTable({ rows: rowsProp, aiInsights: aiInsightsProp, referen
                                 e.stopPropagation()
                                 handleFilterClick(e, column.id)
                               }}
-                              sx={{
-                                p: 0.5,
-                                flexShrink: 0,
-                                color: '#9ca3af',
-                                '&:hover': { color: '#4b5563' },
-                              }}
+                              sx={{ p: 0.5, flexShrink: 0 }}
                             >
                               <FilterListIcon fontSize="small" />
                             </IconButton>
@@ -690,12 +567,7 @@ function SLExtractionTable({ rows: rowsProp, aiInsights: aiInsightsProp, referen
                           <IconButton
                             size="small"
                             onClick={() => handleRetriggerExtraction('column', column.id)}
-                            sx={{
-                              p: 0.5,
-                              flexShrink: 0,
-                              color: '#9ca3af',
-                              '&:hover': { color: '#4b5563' },
-                            }}
+                            sx={{ p: 0.5, flexShrink: 0 }}
                           >
                             <RefreshIcon fontSize="small" />
                           </IconButton>
@@ -704,80 +576,58 @@ function SLExtractionTable({ rows: rowsProp, aiInsights: aiInsightsProp, referen
                     </Box>
                   </ResizableHeaderCell>
                 ))}
+                <TableCell sx={{ backgroundColor: '#f5f5f5', width: 80 }}>Actions</TableCell>
               </TableRow>
             </TableHead>
-            <TableBody
-              sx={{
-                '& .MuiTableRow-root:nth-of-type(odd):not(.Mui-selected)': {
-                  backgroundColor: '#f8fafc',
-                },
-                '& .MuiTableRow-root:nth-of-type(even):not(.Mui-selected)': {
-                  backgroundColor: '#ffffff',
-                },
-              }}
-            >
-              {paginatedData.map((row) => {
+            <TableBody>
+              {data.map((row) => {
                 const isRowSelected = isSelected(row.id)
                 return (
                   <TableRow
                     key={row.id}
                     selected={isRowSelected}
                     hover
-                    sx={{
-                      '&:hover': { backgroundColor: '#f9fafb' },
-                      '&.Mui-selected': { backgroundColor: '#eef2ff !important' },
-                    }}
+                    sx={{ '&:hover': { backgroundColor: '#f5f5f5' } }}
                   >
-                    <TableCell
-                      padding="checkbox"
-                      sx={{ position: 'sticky', left: 0, backgroundColor: 'inherit', zIndex: 2, py: 0.5 }}
-                    >
+                    <TableCell padding="checkbox">
                       <Checkbox
                         checked={isRowSelected}
                         onChange={() => handleSelectRow(row.id)}
                       />
                     </TableCell>
-                {columnsState.map((column) => (
+                    {columns.map((column) => (
                       <TableCell
                         key={column.id}
                         sx={{
                           width: columnWidths[column.id] || column.defaultWidth,
                           minWidth: columnWidths[column.id] || column.defaultWidth,
-                          maxWidth: 'unset',
+                          maxWidth: columnWidths[column.id] || column.defaultWidth,
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
-                          color: '#374151',
-                          fontWeight: 400,
-                          fontSize: 13,
-                          py: 0.5,
                         }}
                       >
-                        <TruncatedCellContent
-                          value={row[column.id]}
-                          width={columnWidths[column.id] || column.defaultWidth}
-                        />
+                        <TruncatedCellContent value={row[column.id]} />
                       </TableCell>
                     ))}
+                    <TableCell>
+                      <IconButton
+                        size="small"
+                        color="error"
+                        onClick={() => handleDeleteRow(row.id)}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </TableCell>
                   </TableRow>
                 )
               })}
             </TableBody>
           </Table>
         </TableContainer>
-        {showPagination && (
-          <TablePagination
-            component="div"
-            count={filteredData.length}
-            page={page}
-            onPageChange={(_e, newPage) => setPage(newPage)}
-            rowsPerPage={rowsPerPage}
-            rowsPerPageOptions={[rowsPerPage]}
-          />
-        )}
       </Paper>
 
       {/* Filter Menus - Using custom component with manual positioning */}
-      {columnsState
+      {columns
         .filter((column) => taxonomyFields.includes(column.id))
         .map((column) => (
           <FilterMenu
@@ -785,8 +635,6 @@ function SLExtractionTable({ rows: rowsProp, aiInsights: aiInsightsProp, referen
             anchorEl={filterMenus[column.id]}
             open={Boolean(filterMenus[column.id])}
             onClose={() => handleFilterClose(column.id)}
-            onSelect={(val) => handleFilterSelect(column.id, val)}
-            activeValue={filters[column.id]}
             columnId={column.id}
             column={column}
             data={data}
@@ -794,29 +642,21 @@ function SLExtractionTable({ rows: rowsProp, aiInsights: aiInsightsProp, referen
         ))}
 
       {/* AI Insights and References Section */}
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(2, 1fr)',
-          gap: 3,
-          mb: 3,
-          alignItems: 'stretch',
-          gridAutoRows: '1fr',
-        }}
-      >
-        <Paper
-          elevation={2}
-          sx={{ flex: 1, p: 2, display: 'flex', flexDirection: 'column', borderRadius: 4, height: '100%' }}
-        >
-          <Typography variant="h6" sx={{ mb: 2, fontWeight: 400 }}>
-            AI Insights
-          </Typography>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, flex: 1 }}>
-            {aiInsightsState.map((insight, index) => (
+      <Box sx={{ display: 'flex', gap: 3, mb: 3 }}>
+        <Paper elevation={2} sx={{ flex: 1, p: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+            <CheckCircleIcon sx={{ color: 'green', mr: 1 }} />
+            <Typography variant="h6" fontWeight="bold">
+              AI Insights
+            </Typography>
+          </Box>
+          <Box component="ul" sx={{ pl: 3, m: 0 }}>
+            {aiInsights.map((insight, index) => (
               <Typography
                 key={index}
+                component="li"
                 variant="body2"
-                sx={{ color: 'text.secondary', whiteSpace: 'pre-wrap' }}
+                sx={{ mb: 1, color: 'text.secondary' }}
               >
                 {insight}
               </Typography>
@@ -824,20 +664,17 @@ function SLExtractionTable({ rows: rowsProp, aiInsights: aiInsightsProp, referen
           </Box>
         </Paper>
 
-        <Paper
-          elevation={2}
-          sx={{ flex: 1, p: 2, display: 'flex', flexDirection: 'column', borderRadius: 4, height: '100%' }}
-        >
-          <Typography variant="h6" sx={{ mb: 2, fontWeight: 400 }}>
+        <Paper elevation={2} sx={{ flex: 1, p: 2 }}>
+          <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
             References
           </Typography>
-          <Box sx={{ flex: 1, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-            {referencesState.map((ref, index) => (
+          <Box>
+            {references.map((ref, index) => (
               <Chip
                 key={index}
                 label={ref}
                 variant="outlined"
-                sx={{ borderRadius: 2, maxWidth: '100%' }}
+                sx={{ mr: 1, mb: 1 }}
                 size="small"
               />
             ))}
@@ -846,7 +683,7 @@ function SLExtractionTable({ rows: rowsProp, aiInsights: aiInsightsProp, referen
       </Box>
 
       {/* Submit Button */}
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3, width: '100%', pr: 1 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3 }}>
         <Button
           variant="contained"
           color="primary"
@@ -862,7 +699,7 @@ function SLExtractionTable({ rows: rowsProp, aiInsights: aiInsightsProp, referen
       <Dialog open={retriggerDialog.open} onClose={() => setRetriggerDialog({ open: false, type: null, target: null })} maxWidth="sm" fullWidth>
         <DialogTitle>
           Retrigger Extraction
-          {retriggerDialog.type === 'column' && ` - ${columnsState.find((c) => c.id === retriggerDialog.target)?.label}`}
+          {retriggerDialog.type === 'column' && ` - ${columns.find((c) => c.id === retriggerDialog.target)?.label}`}
           {retriggerDialog.type === 'rows' && ` - ${retriggerDialog.target.length} Row(s)`}
         </DialogTitle>
         <DialogContent>
