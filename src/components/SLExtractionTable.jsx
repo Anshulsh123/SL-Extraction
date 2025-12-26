@@ -800,7 +800,16 @@ function SLExtractionTable({ rows: rowsProp, aiInsights: aiInsightsProp, referen
         ))}
 
       {/* AI Insights and References Section */}
-      <Box sx={{ display: 'flex', gap: 3, mb: 3, alignItems: 'stretch' }}>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(2, 1fr)',
+          gap: 3,
+          mb: 3,
+          alignItems: 'stretch',
+          gridAutoRows: '1fr',
+        }}
+      >
         <Paper
           elevation={2}
           sx={{ flex: 1, p: 2, display: 'flex', flexDirection: 'column', borderRadius: 4, height: '100%' }}
